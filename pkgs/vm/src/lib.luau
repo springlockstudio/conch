@@ -1,0 +1,173 @@
+local types = require("../luau_packages/types")
+
+type VirtualMachine = types.VirtualMachine
+
+local function error_handler(msg: string)
+    print(debug.traceback(msg))
+    error(`vm encountered an error: {msg}`)
+end
+
+local function LOG(...)
+    return
+    -- print(...)
+end
+
+local function create_vm()
+
+    local locals = {}
+    local globals = {}
+    local commands = {}
+    local stack = table.create(255)
+    local instruction_at = 1
+    local instruction_end = 0
+    local n = 0
+
+    local function PUSH(value: unknown)
+        LOG("pushing value to stack", tostring(value), "now at", n + 1)
+        stack[n + 1] = value
+        n += 1
+    end
+
+    local function POP()
+        LOG(`popping {n} from stack, popped {tostring(stack[n])}`)
+        n -= 1
+        return stack[n + 1]
+    end
+
+    local function POPN(amount: number)
+        LOG(`popping {amount} elements from stack`)
+        local top = n
+        local bottom = n - amount + 1
+        n -= amount
+        return unpack(stack, bottom, top)
+    end
+
+    local function GET(at: number)
+        if at < 0 then at = n + at + 1 end
+        return stack[at]
+    end
+
+    local function call_success(max: number, _, ...: any)
+        for i = 1, math.min(max, select("#", ...)) do
+            PUSH(select(i, ...))
+        end
+    end
+
+    local function process(i: types.Instruction)
+        local instruction = i
+        LOG("RUNNING", i.kind)
+        if instruction.kind == "call" then
+            local arguments = instruction.arguments
+            local t = { POPN(arguments) }
+            local fn = POP()
+            LOG(arguments)
+            call_success(
+                instruction.results,
+                xpcall(fn, error_handler, unpack(t))
+            )
+        elseif instruction.kind == "goto" then
+            instruction_at = instruction.to - 1
+        elseif instruction.kind == "index" then
+            local t, k = POPN(2)
+            PUSH(t[k])
+        elseif instruction.kind == "jump_if" then
+            local value = POP()
+            if not value then
+                instruction_at = instruction.to - 1
+                n = 0
+            end
+        elseif instruction.kind == "jump_if_not_nil" then
+            local value = POP()
+            if value == nil then
+                instruction_at = instruction.to - 1
+                n = 0
+            end
+        elseif instruction.kind == "push_boolean" then
+            PUSH(instruction.b)
+        elseif instruction.kind == "push_cmd" then
+            PUSH(commands[instruction.name])
+        elseif instruction.kind == "push_function" then     
+            local body = instruction.body
+            local function VM_FN(...)
+                local state = {
+                    locals = locals,
+                    globals = globals,
+                    commands = commands,
+                    stack = stack,
+                    n = n,
+                    instruction_at = instruction_at,
+                    instruction_end = instruction_end
+                }
+                
+                LOG("stack at", n)
+                local values = { ... }
+                locals = {}
+                stack = values
+                n = instruction.arguments
+                LOG("starting with", n)
+                instruction_at = 1
+                instruction_end = #body
+
+                while instruction_at <= instruction_end do
+                    LOG("stack size", n)
+                    process(body[instruction_at])
+                    instruction_at += 1
+                end
+
+                locals = state.locals
+                globals = state.globals
+                commands = state.commands
+                stack = state.stack
+                n = state.n
+                instruction_at = state.instruction_at
+                instruction_end = state.instruction_end
+
+                LOG("returning", n, table.concat(values, "1"))
+                return unpack(values, 1, n)
+            end
+
+            PUSH(VM_FN)
+        elseif instruction.kind == "push_global" then
+            PUSH(globals[instruction.name])
+        elseif instruction.kind == "push_local" then
+            PUSH(locals[instruction.index])
+        elseif instruction.kind == "push_nil" then
+            PUSH(nil)
+        elseif instruction.kind == "push_number" then
+            PUSH(instruction.n)
+        elseif instruction.kind == "push_string" then
+            LOG("pushing", instruction.s, "at", n + 1)
+            PUSH(instruction.s)
+        elseif instruction.kind == "push_table" then
+            PUSH(table.create(instruction.alloc))
+        elseif instruction.kind == "set_global" then
+            globals[instruction.name] = POP()
+        elseif instruction.kind == "set_local" then
+            locals[instruction.index] = POP()
+        elseif instruction.kind == "set_table" then
+            local t, k, v = POPN(3)
+            t[k] = v
+        elseif instruction.kind == "return" then
+            LOG("stack", #stack, stack[1])
+            instruction_at = instruction_end
+        end
+    end
+
+    local function run(instructions: { types.Instruction })
+        instruction_at = 1
+        instruction_end = #instructions
+
+        while instruction_at <= instruction_end do
+            process(instructions[instruction_at])
+            instruction_at += 1
+        end
+    end
+
+    return {
+        commands = commands,
+        run = run
+    }
+
+end
+
+return create_vm

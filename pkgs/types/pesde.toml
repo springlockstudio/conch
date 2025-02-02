@@ -1,0 +1,8 @@
+name = "alicesaidhi/conch_types"
+version = "0.1.0"
+
+[target]
+environment = "luau"
+lib = "init.luau"
+
+[dependencies]

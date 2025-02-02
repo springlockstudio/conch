@@ -1,0 +1,8 @@
+name = "alicesaidhi/conch_vm"
+version = "0.1.0"
+
+[target]
+environment = "luau"
+
+[dependencies]
+types = { workspace = "alicesaidhi/conch_types", version = "^" }

@@ -1,0 +1,7 @@
+**/luau_packages/
+**/packages
+**/pesde.lock
+**/network
+
+/local
+/.pesde

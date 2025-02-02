@@ -1,0 +1,12 @@
+name = "alicesaidhi/obedience_glue"
+version = "0.1.0"
+
+[target]
+environment = "roblox"
+lib = "init.luau"
+
+[dependencies]
+ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "luau" }
+compiler = { workspace = "alicesaidhi/conch_compiler", version = "^", target = "luau" }
+vm = { workspace = "alicesaidhi/conch_vm", version = "^", target = "luau" }
+types = { workspace = "alicesaidhi/conch_types", version = "^", target = "luau" }
