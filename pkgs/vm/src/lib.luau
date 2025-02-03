@@ -46,7 +46,9 @@ local function create_vm()
         return stack[at]
     end
 
-    local function call_success(max: number, ...: any)
+    local function call_success(max: number, kind: string, ok: boolean, ...: any)
+        if not ok then error(`attempt to call a {kind} value`, 0) end
+
         for i = 1, math.min(max, select("#", ...)) do
             PUSH(select(i, ...))
         end
@@ -63,13 +65,23 @@ local function create_vm()
             -- LOG(arguments)
             call_success(
                 instruction.results,
-                fn(unpack(t))
+                typeof(fn),
+                pcall(fn, unpack(t))
+
             )
         elseif instruction.kind == "goto" then
             instruction_at = instruction.to - 1
         elseif instruction.kind == "index" then
             local t, k = POPN(2)
-            PUSH(t[k])
+            local ok, result = pcall(function()
+                return t[k]
+            end)
+
+            if not ok then
+                error(`attempt to index {typeof(t)} with {tostring(k)}`, 0)
+            end
+
+            PUSH(result)
         elseif instruction.kind == "jump_if" then
             local value = POP()
             if not value then
@@ -161,6 +173,10 @@ local function create_vm()
             process(instructions[instruction_at])
             instruction_at += 1
         end
+
+        local old_n = n
+        n = 0
+        return old_n, unpack(stack, 1, n)
     end
 
     return {

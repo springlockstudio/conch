@@ -36,22 +36,22 @@ local function execute(src: string)
     assert(user, "No local user")
 
     local source = buffer.fromstring(src)
-    print("starting")
     local ok, result = pcall(ast, source)
-    print("ast", result)
 
     if not ok then console.output({ kind = "error", text = tostring(result) }); return end
     
-    print("compiling")
     local instructions = compiler(result, vm_state)
-    print(instructions)
     vm_state.instructions = {}
 
-    local ok, err = pcall(vm.run, instructions)
-
-    if not ok then
-        console.output({ kind = "error", text = tostring(err) })
+    local function on_complete(ok: boolean, result: number | string, ...: unknown)
+        if not ok then
+            console.output({ kind = "error", text = tostring(result) })
+        end
     end
+
+    console.output({ kind = "info", text = `> {src}` })
+    on_complete(pcall(vm.run, instructions))
+
 end
 
 local function register_command(name: string, fn: (...any) -> (...any), ...: string)
