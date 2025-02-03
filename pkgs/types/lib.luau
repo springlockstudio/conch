@@ -401,4 +401,35 @@ export type VirtualMachine = {
     commands: { [string]: unknown },
 }
 
+-- Analysis
+
+export type Type_General<T=string> = {
+    kind: "misc",
+    type: T,
+}
+
+export type Type_Enum = {
+    kind: "enum",
+    options: { string },
+    name: string?,
+    description: string?
+}
+
+export type Type_Argument<T> = {
+    name: string,
+    description: string?,
+    type: T
+}
+export type Type_Function = {
+    kind: "function",
+    name: string,
+    description: string?,
+    arguments: { Type_Argument<Type> },
+    returns: { Type_General }
+}
+
+export type Type = 
+    | Type_General
+    | Type_Enum
+
 return {}

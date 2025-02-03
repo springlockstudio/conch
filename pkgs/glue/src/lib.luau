@@ -8,6 +8,7 @@ local client = require("./client")
 local bootstrap = require("./bootstrap")
 local console = require("./console")
 local zap = require("./network/zap")
+local ast = require("../luau_packages/ast")
 
 export type Log = types.Log
 export type CommandContext = types.CommandContext
@@ -173,14 +174,19 @@ end
 
 return {
 
-    execute = function(src: string)
+    parse = ast,
+    execute = function(ast: ast.Result)
         local local_user = state.local_user
         assert(IS_CLIENT, "cannot run commands outside of the client")
         assert(local_user, "unable to run commands without a local user")
 
-        local pop = create_command_context(user, invocation_id)
-        console.execute(src)
-        pop()
+        local fn = console.execute(ast)
+
+        return function()
+            local pop = create_command_context(user, invocation_id)
+            fn()
+            pop()
+        end
     end,
 
     register = function(name: string, fn: (...any) -> (...any), ...: string)

@@ -1,0 +1,10 @@
+name = "alicesaidhi/conch_analysis"
+version = "0.1.0"
+
+[target]
+environment = "luau"
+lib = "src/lib.luau"
+
+[dependencies]
+conch_ast = { workspace = "alicesaidhi/conch_ast" }
+conch_types = { workspace = "alicesaidhi/conch_types" }

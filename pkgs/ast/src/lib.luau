@@ -13,7 +13,7 @@ end
 --[=[
     Lexes the given input into tokens
 ]=]
-local function parse(input: buffer)
+local function parse(input: buffer, can_yield: boolean?)
 
 	local pos = 0
     local line = 0
@@ -320,7 +320,6 @@ local function parse(input: buffer)
         return old_token, old_kind
     end
 
-    
     local function current_is(kind: TokenKindText | TokenKindRest)
         while current_kind == "\n" do
             consume()
@@ -337,6 +336,23 @@ local function parse(input: buffer)
 
         return lookahead_kind == kind
     end
+
+    
+    local function yield()
+        if can_yield then
+            print("yielding")
+            local b = coroutine.yield()
+            assert(typeof(b) == "buffer")
+            input = b
+            len = buffer.len(b)
+
+            current_token = next_token()
+            current_kind = current_token.kind
+            lookahead_token = next_token()
+            lookahead_kind = lookahead_token.kind
+        end
+    end
+
 
     local function display(token: Token): string
         local kind = token.kind
@@ -370,6 +386,9 @@ local function parse(input: buffer)
     local function expect<T>(kind: T & (TokenKindText | TokenKindRest)): Token<T>
         if current_is(kind) then
             return consume() :: any
+        elseif current_kind == "eof" and can_yield then
+            yield()
+            return if current_is(kind) then consume() else expect_failure(kind)
         else
             return expect_failure(kind)
         end
@@ -445,6 +464,9 @@ local function parse(input: buffer)
     function parse_expression_or_command(): types.ExpressionOrCommand
         if current_is("identifier") then
             return parse_command()
+        elseif current_kind == "eof" and can_yield then
+            yield()
+            return parse_expression_or_command()
         else
             return parse_expression()
         end
@@ -457,6 +479,7 @@ local function parse(input: buffer)
         local first = true
 
         while not current_is("|") do
+            if current_kind == "eof" and can_yield then yield(); continue end
             if not first then expect(",") end
             table.insert(arguments, expect("identifier"))
             first = false
@@ -465,7 +488,7 @@ local function parse(input: buffer)
         expect("|")
         expect("{")
 
-        local block = parse_block()
+        local block = parse_block("}")
 
         expect("}")
         return {
@@ -484,9 +507,6 @@ local function parse(input: buffer)
     function parse_table(): types.Table
         expect("{")
         
-        local parsing_newlines = parse_line_endings
-        parse_line_endings = false
-
         local fields: { types.TableField } = {}
         local first = true
 
@@ -517,7 +537,6 @@ local function parse(input: buffer)
             -- print(current_kind)
         end
 
-        parse_line_endings = parsing_newlines
         expect("}")
         return { fields = fields }
     end
@@ -573,8 +592,11 @@ local function parse(input: buffer)
             return parse_lambda()
         elseif current_is "{" then
             return { kind = "table", table = parse_table() }
+        elseif current_kind == "eof" and can_yield then
+            yield()
+            return parse_expression()
         else
-            report(`expected something, got {current_kind}`)
+            return report(`expected something, got {current_kind}`)
         end
     end
 
@@ -584,18 +606,17 @@ local function parse(input: buffer)
         local arguments: { types.Expression } = {}
 
         while
-            current_is "$" or
+            current_kind ~= "\n" and
+            (current_is "$" or
             current_is "string" or
             current_is "number" or
             current_is "true" or
             current_is "false" or
             current_is "identifier" or
             current_is "{" or
-            current_is "|"
+            current_is "|")
         do
-            parse_line_endings = false
             local expression = parse_expression()
-            parse_line_endings = true
             table.insert(arguments, expression)
         end
 
@@ -618,7 +639,7 @@ local function parse(input: buffer)
                 local expression = if current_is "identifier" then parse_command() else parse_expression()
                 expect(")")
                 expect("{")
-                local block = parse_block()
+                local block = parse_block("}")
                 expect("}")
 
                 table.insert(conditionals, { condition = expression, block = block })
@@ -632,14 +653,14 @@ local function parse(input: buffer)
                 local expression = if current_is "identifier" then parse_command() else parse_expression()
                 expect(")")
                 expect("{")
-                local block = parse_block()
+                local block = parse_block("}")
                 expect("}")
 
                 table.insert(conditionals, { condition = expression, block = block })
             elseif current_is "else" then
                 expect("else")
                 expect("{")
-                else_block = parse_block()
+                else_block = parse_block("}")
                 expect("}")
                 break
             else
@@ -662,7 +683,7 @@ local function parse(input: buffer)
 
         expect("{")
         -- print("currently", current_kind, current_token.text, "next", lookahead_kind)
-        local block = parse_block()
+        local block = parse_block("}")
         expect("}")
 
         return {
@@ -702,14 +723,13 @@ local function parse(input: buffer)
         return { kind = "return", values = values }
     end
 
-    function parse_block(): types.Block
+    function parse_block(delimiter: types.TokenKindRest): types.Block
         local statements: { types.Statement } = {}
         local last_statement: types.LastStatement?
         -- print("starting with", current_kind, current_token.text, "next", lookahead_kind, lookahead_token.text)
         -- print("getting next")
         while
-            current_kind ~= "eof" and
-            current_kind ~= "}"
+            current_kind ~= delimiter
         do
             -- print("getting next", current_kind)
             -- print(current_kind, lookahead_kind)
@@ -740,6 +760,10 @@ local function parse(input: buffer)
                 table.insert(statements, parse_command())
             elseif current_is ";" then
                 consume()
+            elseif current_kind == "eof" and delimiter ~= "eof" then
+                yield()
+            elseif current_kind == delimiter then
+                break
             else
                 report(`cannot parse {current_kind}`)
             end
@@ -751,7 +775,67 @@ local function parse(input: buffer)
         }
     end
 
-    return parse_block()
+    return parse_block("eof")
 end
 
-return parse
+export type Result = {
+    status: "finished",
+    src: string,
+    value: types.Block
+} | {
+    status: "pending",
+    src: string,
+    append: (new: string) -> Result,
+    set: (new: string) -> Result,
+} | {
+    status: "error",
+    src: string,
+    why: string
+}
+
+local function generate(input: string, yield: boolean?): Result
+    local value = input
+    local thread = coroutine.create(parse)
+    local get_result
+
+    local function append(src: string)
+        value ..= src
+        local b = buffer.fromstring(value)
+        return get_result(coroutine.resume(thread, b, yield))
+    end
+
+    local function overwrite(src: string)
+        value = src
+        local b = buffer.fromstring(src)
+        return get_result(coroutine.resume(thread, b, yield))
+    end
+
+    function get_result(ok: boolean, result: any): Result
+        if coroutine.status(thread) == "suspended" then
+            return {
+                status = "pending",
+                src = value,
+                append = append,
+                set = overwrite,
+            } :: any
+        elseif ok == false then
+            return {
+                status = "error",
+                src = value,
+                why = result
+            } :: any
+        elseif coroutine.status(thread) == "dead" then
+            return {
+                status = "finished",
+                src = value,
+                value = result
+            } :: any
+        else
+            error("?")
+        end
+    end
+
+    return overwrite(input)
+end
+
+return generate

@@ -15,7 +15,7 @@ type Padding = {
 
 local function padding(props: Padding)
 	
-	local padding = props.padding or 8
+	local padding = props.padding or 0
 	local x = props.x or padding
 	local y = props.y or padding
 	local left = props.left or x

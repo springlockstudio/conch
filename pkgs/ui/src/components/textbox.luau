@@ -17,6 +17,8 @@ type Background = {
     read placeholder: Can<string>?,
     read focused: Can<boolean>?,
     read xalignment: Can<Enum.TextXAlignment>?,
+    read multiline: Can<boolean>?,
+    read editable: Can<boolean>?,
 
     read update_text: ((string) -> ())?,
     read update_focused: ((boolean) -> ())?,
@@ -38,6 +40,7 @@ return function(props: Background)
         TextSize = props.text_size or 16,
         TextColor3 = theme.text,
         TextXAlignment = props.xalignment,
+        MultiLine = props.multiline,
         FontFace = theme.font,
 
         BackgroundTransparency = 1,

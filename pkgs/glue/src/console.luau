@@ -31,16 +31,18 @@ local function replicate_to_player(player: Player, representation: types.Command
     zap.register_command.fire(player, { name = representation.name, permissions = representation.permissions })
 end
 
-local function execute(src: string)
-    local user = state.local_user
-    assert(user, "No local user")
+local busy = false
 
-    local source = buffer.fromstring(src)
-    local ok, result = pcall(ast, source)
+local function execute(ast: ast.Result)
+    assert(ast.status ~= "pending", "unfinished block")
+    assert(not busy, "already executing!")
+    console.output({ kind = "info", text = `> {ast.src}` })
+    if ast.status == "error" then
+        return console.output({ kind = "error", text = ast.why })
+    end
+    busy = true
 
-    if not ok then console.output({ kind = "error", text = tostring(result) }); return end
-    
-    local instructions = compiler(result, vm_state)
+    local instructions = compiler(ast.value, vm_state)
     vm_state.instructions = {}
 
     local function on_complete(ok: boolean, result: number | string, ...: unknown)
@@ -49,9 +51,8 @@ local function execute(src: string)
         end
     end
 
-    console.output({ kind = "info", text = `> {src}` })
     on_complete(pcall(vm.run, instructions))
-
+    busy = false
 end
 
 local function register_command(name: string, fn: (...any) -> (...any), ...: string)
@@ -81,5 +82,7 @@ return {
     console = console,
     register_command = register_command,
     replicate_to_player = replicate_to_player,
-    execute = execute
+    execute = execute,
+    
+    ast = ast,
 }

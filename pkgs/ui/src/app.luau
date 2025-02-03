@@ -1,8 +1,6 @@
 local RunService = game:GetService("RunService")
 
 local vide = require("../roblox_packages/vide")
-local ast = require("../luau_packages/ast")
-
 local state = require("./state")
 local conch = require("../roblox_packages/conch_glue")
 local background = require("./components/background")
@@ -34,21 +32,22 @@ return function()
     conch.console.output = output
     
     local raw_text = source("")
+    local editable = source(true)
     local focused = source(true)
+    local pending = source()
 
-    local syntax_error = source(false :: false | string)
-    local deferred = false
+    local tree = derive(function()
+        if pending() then
+            local status = conch.parse(pending().src, true)
+            return status
+        else
+            local status = conch.parse(raw_text(), true)
+            return status
+        end
+    end)
 
-    effect(function()
-        local new = raw_text()
-        
-        if deferred then return end
-        deferred = true
-        RunService.RenderStepped:Once(function()
-            deferred = false
-            local ok, err = pcall(ast, buffer.fromstring(new))
-            syntax_error(if ok then false else err)
-        end)
+    local syntax_error = derive(function()
+        return if tree().status == "error" then tree().why else false
     end)
 
     return screen {
@@ -61,6 +60,7 @@ return function()
 
         background { 
             height = 50,
+            auto = Enum.AutomaticSize.Y,
             layout = 1,
             corner(6),
 
@@ -72,12 +72,28 @@ return function()
                 update_focused = focused,
                 text_size = 20,
                 xalignment = Enum.TextXAlignment.Left,
+                editable = editable,
+                multiline = function()
+                    return tree().status == "pending"
+                end,
 
                 enter = function(value)
                     raw_text("")
                     focused(true)
-                    local ok, err = pcall(conch.execute, value)
-                    if not ok then error(err) end
+                    
+                    if pending() then
+                        pending(pending().append(value))
+                    else
+                        pending(conch.parse(value, true))
+                    end
+
+                    if pending().status ~= "pending" then
+                        local tree = pending()
+                        editable(false)
+                        pending(nil)
+                        conch.execute(tree)
+                        editable(true)
+                    end
                 end
             },
 
@@ -108,6 +124,7 @@ return function()
         values(state.logs, function(log: conch.Log, layout: () -> number)
             return background {
                 height = 24,
+                auto = Enum.AutomaticSize.Y,
                 layout = function() return -layout() - 1 end,
                 color = theme.background():Lerp(
                     if log.kind == "normal" then theme.text()
@@ -119,7 +136,7 @@ return function()
                 ),
     
                 flex():fill():vertical("center"):horizontal("left"),
-                padding { padding = 8 },
+                padding { x = 8, y = 0 },
     
                 text {
                     text = log.text,
