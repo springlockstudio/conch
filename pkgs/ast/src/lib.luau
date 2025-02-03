@@ -18,7 +18,6 @@ local function parse(input: buffer)
 	local pos = 0
     local line = 0
     local len = buffer.len(input)
-    local parse_line_endings: boolean = false
 
     local function peek(): number
         if pos == len then return 0 end
@@ -36,6 +35,11 @@ local function parse(input: buffer)
 
         bump()
         return peek()
+    end
+
+    local function eof(msg: string)
+        if pos >= len then error(msg, 0) end
+        return false
     end
 
     local function bump_peek()
@@ -80,8 +84,9 @@ local function parse(input: buffer)
 		local delim = peek()
 		local c = bump_peek()
 
-		while c ~= delim do
+		while c ~= delim and not eof("expected string to be finished at", pos) do
 			if c == 0 or c == char("\n") or c == char("\r") then
+                has_error = true
 				return "error"
 			elseif c == char("\\") then
 				bump()
@@ -115,7 +120,7 @@ local function parse(input: buffer)
 			end
 		end
 
-		while is_digit(c) or c == char(".") or c == char("_") do
+		while (is_digit(c) or c == char(".") or c == char("_")) do
 			c = bump_peek()
 		end
 
@@ -127,7 +132,7 @@ local function parse(input: buffer)
 			end
 		end
 
-		while is_digit(c) or is_alpha(c :: any) or c == char("_") do
+		while (is_digit(c) or is_alpha(c :: any) or c == char("_")) do
 			c = bump_peek()
 		end
 
@@ -143,6 +148,7 @@ local function parse(input: buffer)
 		if tonumber(text, base) then
 			return "number"
 		else
+            has_error = true
 			return "error"
 		end
 	end
@@ -155,7 +161,7 @@ local function parse(input: buffer)
         end
 
         if c == char("#") then
-            while c ~= char("\n") do
+            while c ~= char("\n") and c ~= 0 do
                 bump_any()
             end
             return "comment"
@@ -224,6 +230,7 @@ local function parse(input: buffer)
             if peek() == char("=") then
                 return "~="
             else
+                has_error = true
                 return "error"
             end
         elseif c == char(">") then
@@ -280,7 +287,7 @@ local function parse(input: buffer)
             return read_kind()
         end
 
-        error(`no symbol matching {string.char(c)}`)
+        error(`no symbol matching {string.char(c)}`, 0)
         return "error"
     end
 
@@ -288,7 +295,7 @@ local function parse(input: buffer)
         local start = pos
         local kind = read_kind()
         
-        while kind == "whitespace" or kind == "comment" or parse_line_endings == false and (kind == "\n" or kind == ";") do
+        while kind == "whitespace" or kind == "comment" do
             start = pos
             kind = read_kind()
         end
@@ -313,6 +320,24 @@ local function parse(input: buffer)
         return old_token, old_kind
     end
 
+    
+    local function current_is(kind: TokenKindText | TokenKindRest)
+        while current_kind == "\n" do
+            consume()
+        end
+
+        return current_kind == kind
+    end
+
+    local function lookahead_is(kind: TokenKindText | TokenKindRest)
+        while lookahead_kind == "\n" do
+            lookahead_token = next_token()
+            lookahead_kind = lookahead_token.kind
+        end
+
+        return lookahead_kind == kind
+    end
+
     local function display(token: Token): string
         local kind = token.kind
     
@@ -335,7 +360,7 @@ local function parse(input: buffer)
             span = span or current_token.span,
         }
     
-        error(`{report.message} {report.span}`)
+        error(`{report.message} from {report.span.x} to {report.span.y}`, 0)
     end
 
     local function expect_failure(kind: TokenKindText | TokenKindRest): never
@@ -343,7 +368,7 @@ local function parse(input: buffer)
     end
 
     local function expect<T>(kind: T & (TokenKindText | TokenKindRest)): Token<T>
-        if current_kind == kind :: any then
+        if current_is(kind) then
             return consume() :: any
         else
             return expect_failure(kind)
@@ -366,14 +391,14 @@ local function parse(input: buffer)
     local parse_return: () -> types.Last_Return
 
     function parse_var_root(): types.VarRoot
-        print("root:", current_kind, current_token.text)
-        if current_kind == "identifier" then
-            print("global")
+        -- print("root:", current_kind, current_token.text)
+        if current_is("identifier") then
+            -- print("global")
             return { kind = "global", token = expect("identifier") }
-        elseif current_kind == "$" and lookahead_kind == "identifier" then
+        elseif current_is("$") and lookahead_is("identifier") then
             expect("$")
             return { kind = "name", name = expect("identifier") }
-        elseif current_kind == "$" and lookahead_kind == "(" then
+        elseif current_is("$") and lookahead_is("(") then
             expect("$")
             expect("(")
             local expr = parse_expression_or_command()
@@ -385,11 +410,11 @@ local function parse(input: buffer)
     end
 
     function parse_var_suffix(): types.VarSuffix
-        if current_kind == "." then
+        if current_is(".") then
             expect(".")
             local identifier = expect("identifier")
             return { kind = "nameindex", name = identifier }
-        elseif current_kind == "[" then
+        elseif current_is("[") then
             expect("[")
             local expr = parse_expression_or_command()
             expect("]")
@@ -401,11 +426,10 @@ local function parse(input: buffer)
 
     function parse_var_suffixes(): { types.VarSuffix }
         local suffixes: { types.VarSuffix } = {}
-        while current_kind == "." or current_kind == "[" do
+        while current_is(".") or current_is("[") do
             local suffix = parse_var_suffix()
             table.insert(suffixes, suffix)
         end
-        print("finished")
         return suffixes
     end
 
@@ -419,7 +443,7 @@ local function parse(input: buffer)
     end
 
     function parse_expression_or_command(): types.ExpressionOrCommand
-        if current_kind == "identifier" then
+        if current_is("identifier") then
             return parse_command()
         else
             return parse_expression()
@@ -432,7 +456,7 @@ local function parse(input: buffer)
         local arguments = {}
         local first = true
 
-        while current_kind ~= "|" do
+        while not current_is("|") do
             if not first then expect(",") end
             table.insert(arguments, expect("identifier"))
             first = false
@@ -466,18 +490,18 @@ local function parse(input: buffer)
         local fields: { types.TableField } = {}
         local first = true
 
-        while current_kind ~= "}" do
+        while not current_is("}") do
             if not first then expect(",") end
-            print("token", current_token.text)
+            -- print("token", current_token.text)
             first = false
             
-            if current_kind == "identifier" and lookahead_kind == "=" then
-                print("ident")
+            if current_is "identifier" and lookahead_is "=" then
+                -- print("ident")
                 local key = expect("identifier")
                 expect("=")
                 local value = parse_expression()
                 table.insert(fields, { kind = "namekey", name = key, value = value })
-            elseif current_kind == "[" then
+            elseif current_is "[" then
                 expect("[")
                 local key = parse_expression()
                 expect("]")
@@ -490,7 +514,7 @@ local function parse(input: buffer)
                 table.insert(fields, { kind = "nokey", value = expr })
             end
 
-            print(current_kind)
+            -- print(current_kind)
         end
 
         parse_line_endings = parsing_newlines
@@ -499,57 +523,55 @@ local function parse(input: buffer)
     end
 
     function parse_expression(): types.Expression
-        if current_kind == "$" and lookahead_kind == "(" then
+        if current_is "$" and lookahead_is "(" then
             -- nested call
             expect("$")
             local expr
-            if lookahead_kind == "$" or lookahead_kind == "identifier" then
-                parse_line_endings = true
+            if lookahead_is "$" or lookahead_is "identifier" then
                 expect("(")
                 expr = parse_command()
-                parse_line_endings = false
             else
                 expect("(")
                 expr = parse_expression()
             end
             expect(")")
             return { kind = "evaluate", body = expr }
-        elseif current_kind == "$" and lookahead_kind == "identifier" then
+        elseif current_is "$" and lookahead_is "identifier" then
             -- variable
             return { kind = "var", var = parse_var() }
-        elseif current_kind == "string" then
+        elseif current_is "string" then
             -- string
             return {
                 kind = "string" :: "string",
                 token = expect("string")
             }
-        elseif current_kind == "number" then
+        elseif current_is "number" then
             -- number
             return {
                 kind = "number" :: "number",
                 token = expect("number")
             }
-        elseif current_kind == "true" then
+        elseif current_is "true" then
             -- boolean
             return {
                 kind = "boolean" :: "boolean",
                 token = expect("true")
             }
-        elseif current_kind == "false" then
+        elseif current_is "false" then
             return {
                 kind = "boolean" :: "boolean",
                 token = expect("false")
             }
-        elseif current_kind == "identifier" then
+        elseif current_is "identifier" then
             local token = expect("identifier")
             return {
                 kind = "string",
                 token = { kind = "string", text = `"{token.text}"`, span = token.span } :: Token<"string">
             }
-        elseif current_kind == "|" then
+        elseif current_is "|" then
             -- lambda
             return parse_lambda()
-        elseif current_kind == "{" then
+        elseif current_is "{" then
             return { kind = "table", table = parse_table() }
         else
             report(`expected something, got {current_kind}`)
@@ -557,30 +579,25 @@ local function parse(input: buffer)
     end
 
     function parse_command(): types.Command
-        parse_line_endings = true
-        print("starting command", current_kind, lookahead_kind, current_token.text, lookahead_token.text)
+        -- print("starting command", current_kind, lookahead_kind, current_token.text, lookahead_token.text)
         local var = parse_var()
         local arguments: { types.Expression } = {}
 
         while
-            current_kind == "$" or
-            current_kind == "string" or
-            current_kind == "number" or
-            current_kind == "true" or
-            current_kind == "false" or
-            current_kind == "identifier" or
-            current_kind == "{" or
-            current_kind == "|"
+            current_is "$" or
+            current_is "string" or
+            current_is "number" or
+            current_is "true" or
+            current_is "false" or
+            current_is "identifier" or
+            current_is "{" or
+            current_is "|"
         do
             parse_line_endings = false
             local expression = parse_expression()
             parse_line_endings = true
             table.insert(arguments, expression)
         end
-
-        parse_line_endings = false
-
-        while current_kind == "\n" or current_kind == ";" do consume() end
 
         return {
             kind = "command",
@@ -598,7 +615,7 @@ local function parse(input: buffer)
         while true do
             if first then
                 expect("(")
-                local expression = if current_kind == "identifier" then parse_command() else parse_expression()
+                local expression = if current_is "identifier" then parse_command() else parse_expression()
                 expect(")")
                 expect("{")
                 local block = parse_block()
@@ -607,19 +624,19 @@ local function parse(input: buffer)
                 table.insert(conditionals, { condition = expression, block = block })
 
                 first = false
-            elseif current_kind == "else" and lookahead_kind == "if" then
+            elseif current_is "else" and lookahead_is "if" then
                 expect("else")
                 expect("if")
 
                 expect("(")
-                local expression = if current_kind == "identifier" then parse_command() else parse_expression()
+                local expression = if current_is "identifier" then parse_command() else parse_expression()
                 expect(")")
                 expect("{")
                 local block = parse_block()
                 expect("}")
 
                 table.insert(conditionals, { condition = expression, block = block })
-            elseif current_kind == "else" then
+            elseif current_is "else" then
                 expect("else")
                 expect("{")
                 else_block = parse_block()
@@ -640,11 +657,11 @@ local function parse(input: buffer)
     function parse_while(): types.Stat_While
         expect("while")
         expect("(")
-        local expression = if current_kind == "identifier" then parse_command() else parse_expression()
+        local expression = if current_is "identifier" then parse_command() else parse_expression()
         expect(")")
 
         expect("{")
-        print("currently", current_kind, current_token.text, "next", lookahead_kind)
+        -- print("currently", current_kind, current_token.text, "next", lookahead_kind)
         local block = parse_block()
         expect("}")
 
@@ -688,41 +705,44 @@ local function parse(input: buffer)
     function parse_block(): types.Block
         local statements: { types.Statement } = {}
         local last_statement: types.LastStatement?
-        print("starting with", current_kind, current_token.text, "next", lookahead_kind, lookahead_token.text)
-        print("getting next")
+        -- print("starting with", current_kind, current_token.text, "next", lookahead_kind, lookahead_token.text)
+        -- print("getting next")
         while
             current_kind ~= "eof" and
             current_kind ~= "}"
         do
-            print("getting next", current_kind)
-            print(current_kind, lookahead_kind)
+            -- print("getting next", current_kind)
+            -- print(current_kind, lookahead_kind)
             if last_statement then report("expected to finish after last statement") end
 
-            if current_kind == "identifier" and lookahead_kind == "=" then
-                print("assign")
+            if current_is "identifier" and lookahead_is "=" then
+                -- print("assign")
                 local key = expect("identifier")
                 expect("=")
                 local value = parse_expression_or_command()
                 local statement = { kind = "assign", left = key, right = value }
                 table.insert(statements, statement)
-            elseif current_kind == "if" then
+            elseif current_is "if" then
                 table.insert(statements, parse_if())
-            elseif current_kind == "while" then
+            elseif current_is "while" then
                 table.insert(statements, parse_while())      
-            elseif current_kind == "for" then
+            elseif current_is "for" then
                 table.insert(statements, parse_for())
-            elseif current_kind == "return" then
+            elseif current_is "return" then
                 last_statement = parse_return()
-            elseif current_kind == "break" then
+            elseif current_is "break" then
                 expect("break")
                 last_statement = { kind = "break" :: "break" }
-            elseif current_kind == "continue" then
+            elseif current_is "continue" then
                 expect("continue")
                 last_statement = { kind = "continue" :: "continue" }
-            else
+            elseif current_is "identifier" or current_is "$" then
                 table.insert(statements, parse_command())
+            elseif current_is ";" then
+                consume()
+            else
+                report(`cannot parse {current_kind}`)
             end
-            print(current_kind)
         end
 
         return {

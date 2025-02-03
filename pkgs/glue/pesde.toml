@@ -1,9 +1,9 @@
-name = "alicesaidhi/obedience_glue"
+name = "alicesaidhi/conch_glue"
 version = "0.1.0"
 
 [target]
 environment = "roblox"
-lib = "init.luau"
+lib = "src/lib.luau"
 
 [dependencies]
 ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "luau" }

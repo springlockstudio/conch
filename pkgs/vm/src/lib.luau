@@ -3,8 +3,7 @@ local types = require("../luau_packages/types")
 type VirtualMachine = types.VirtualMachine
 
 local function error_handler(msg: string)
-    print(debug.traceback(msg))
-    error(`vm encountered an error: {msg}`)
+    error(msg)
 end
 
 local function LOG(...)
@@ -23,19 +22,19 @@ local function create_vm()
     local n = 0
 
     local function PUSH(value: unknown)
-        LOG("pushing value to stack", tostring(value), "now at", n + 1)
+        -- LOG("pushing value to stack", tostring(value), "now at", n + 1)
         stack[n + 1] = value
         n += 1
     end
 
     local function POP()
-        LOG(`popping {n} from stack, popped {tostring(stack[n])}`)
+        -- LOG(`popping {n} from stack, popped {tostring(stack[n])}`)
         n -= 1
         return stack[n + 1]
     end
 
     local function POPN(amount: number)
-        LOG(`popping {amount} elements from stack`)
+        -- LOG(`popping {amount} elements from stack`)
         local top = n
         local bottom = n - amount + 1
         n -= amount
@@ -47,23 +46,24 @@ local function create_vm()
         return stack[at]
     end
 
-    local function call_success(max: number, _, ...: any)
+    local function call_success(max: number, ...: any)
         for i = 1, math.min(max, select("#", ...)) do
             PUSH(select(i, ...))
         end
     end
 
     local function process(i: types.Instruction)
+        -- task.wait()
         local instruction = i
-        LOG("RUNNING", i.kind)
+        -- LOG("RUNNING", i.kind)
         if instruction.kind == "call" then
             local arguments = instruction.arguments
             local t = { POPN(arguments) }
             local fn = POP()
-            LOG(arguments)
+            -- LOG(arguments)
             call_success(
                 instruction.results,
-                xpcall(fn, error_handler, unpack(t))
+                fn(unpack(t))
             )
         elseif instruction.kind == "goto" then
             instruction_at = instruction.to - 1
@@ -99,17 +99,17 @@ local function create_vm()
                     instruction_end = instruction_end
                 }
                 
-                LOG("stack at", n)
+                -- LOG("stack at", n)
                 local values = { ... }
                 locals = {}
                 stack = values
                 n = instruction.arguments
-                LOG("starting with", n)
+                -- LOG("starting with", n)
                 instruction_at = 1
                 instruction_end = #body
 
                 while instruction_at <= instruction_end do
-                    LOG("stack size", n)
+                    -- LOG("stack size", n)
                     process(body[instruction_at])
                     instruction_at += 1
                 end
@@ -122,7 +122,7 @@ local function create_vm()
                 instruction_at = state.instruction_at
                 instruction_end = state.instruction_end
 
-                LOG("returning", n, table.concat(values, "1"))
+                -- LOG("returning", n, table.concat(values, "1"))
                 return unpack(values, 1, n)
             end
 
@@ -136,7 +136,7 @@ local function create_vm()
         elseif instruction.kind == "push_number" then
             PUSH(instruction.n)
         elseif instruction.kind == "push_string" then
-            LOG("pushing", instruction.s, "at", n + 1)
+            -- LOG("pushing", instruction.s, "at", n + 1)
             PUSH(instruction.s)
         elseif instruction.kind == "push_table" then
             PUSH(table.create(instruction.alloc))

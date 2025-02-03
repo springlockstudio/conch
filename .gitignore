@@ -1,7 +1,9 @@
 **/luau_packages/
+**/roblox_packages/
 **/packages
 **/pesde.lock
-**/network
+**/network/server.luau
+**/network/client.luau
 
 /local
-/.pesde
+**/.pesde

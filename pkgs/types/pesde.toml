@@ -3,6 +3,6 @@ version = "0.1.0"
 
 [target]
 environment = "luau"
-lib = "init.luau"
+lib = "lib.luau"
 
 [dependencies]

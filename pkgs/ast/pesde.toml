@@ -3,7 +3,7 @@ version = "0.1.0"
 
 [target]
 environment = "luau"
-lib = "src/init.luau"
+lib = "src/lib.luau"
 
 [dependencies]
 types = { workspace = "alicesaidhi/conch_types", version = "^" }

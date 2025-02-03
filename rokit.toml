@@ -6,3 +6,4 @@
 [tools]
 pesde = "daimond113/pesde@0.5.2+registry.0.1.1"
 zap = "red-blox/zap@0.6.16"
+rojo = "rojo-rbx/rojo@7.4.4"

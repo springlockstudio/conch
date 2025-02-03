@@ -31,10 +31,8 @@ local function compile(block: types.Block, vm_state: VMState): { types.Instructi
     local next_instruction = #instructions + 1
     local loop_begins_at: number | false = false
 
-    print("opening block")
 
     local function INSERT(instruction: types.Instruction)
-        print("inserting", next_instruction, instruction.kind)
         instructions[next_instruction] = instruction
         next_instruction += 1
     end
@@ -140,13 +138,8 @@ local function compile(block: types.Block, vm_state: VMState): { types.Instructi
             table.insert(state.instructions, { kind = "set_local", index = i })
         end
 
-        print("lambda size", lambda.block.body[1].kind, block.body[2].kind)
-        compile(lambda.block, state)
-        
-        print("total instructions", #state.instructions, state.instructions[4].kind)
-
+        compile(lambda.block, state)        
         INSERT { kind = "push_function", body = state.instructions, arguments = #lambda.arguments }
-        print("total instructions", #state.instructions)
     end
 
     function compile_var(var: types.Var)
