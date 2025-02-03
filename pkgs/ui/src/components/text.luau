@@ -10,9 +10,11 @@ type Background = {
     read height: Can<number>?,
 
     read text: Can<string>,
+    read weight: Can<Enum.FontWeight>?,
     read text_size: Can<number>?,
     read text_style: Can<"normal" | "info" | "warn" | "error">?,
     read xalignment: Can<Enum.TextXAlignment>?,
+    read wrapped: Can<boolean>?,
     
     [number]: unknown
 }
@@ -23,7 +25,8 @@ return function(props: Background)
         Size = function()
             return UDim2.fromOffset(read(props.width) or 0, read(props.height) or 0)
         end,
-        AutomaticSize = Enum.AutomaticSize.XY,
+        AutomaticSize = if props.width and props.height then nil
+        elseif props.width then Enum.AutomaticSize.Y else Enum.AutomaticSize.X,
 
         Text = props.text,
         TextSize = props.text_size,
@@ -35,7 +38,15 @@ return function(props: Background)
                 elseif read(style) == "info" then theme.text_info()
                 else theme.text()
         end,
-        FontFace = theme.font,
+        FontFace = function()
+            local f: Font = theme.font()
+            local weight = read(props.weight) or Enum.FontWeight.Regular
+            return Font.new(
+                f.Family,
+                weight
+            )
+        end,
+        TextWrapped = props.wrapped,
         TextXAlignment = props.xalignment,
 
         BackgroundTransparency = 1,

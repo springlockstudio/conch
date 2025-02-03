@@ -148,7 +148,7 @@ export type VarRoot =
 export type VarSuffix_NameIndex = {
     read kind: "nameindex",
     read span: Span,
-    read name: Token<"identifier">,
+    read name: Token<"identifier"> | Token<"eof">,
 }
 
 export type VarSuffix_ExprIndex = {
@@ -211,6 +211,7 @@ export type Table = {
 export type Stat_Assign = {
     read kind: "assignment",
     read span: Span,
+    read operator: Token<"=">,
     read left: Token<"identifier">,
     read right: ExpressionOrCommand
 }
@@ -432,33 +433,38 @@ export type VirtualMachine = {
 
 -- Analysis
 
-export type Type_General<T=string> = {
-    kind: "misc",
-    type: T,
-}
 
-export type Type_Enum = {
-    kind: "enum",
-    options: { string },
-    name: string?,
-    description: string?
-}
-
-export type Type_Argument<T> = {
+export type LogKind = "normal" | "warn" | "error" | "info"
+export type AnalysisSuggestion = {
     name: string,
-    description: string?,
-    type: T
+    description: string | false,
+    type: string,
+
+    replace: vector,
+    with: string,
 }
-export type Type_Function = {
-    kind: "function",
-    name: string,
-    description: string?,
-    arguments: { Type_Argument<Type> },
-    returns: { Type_General }
+export type AnalysisInformation = {
+    at: number,
+    text: string,
+    logs: { { kind: LogKind, text: string } },
+
+    analyzing: (AnalysisCommand | AnalysisCommandArgument)?,
+    suggestions: { AnalysisSuggestion }
 }
 
-export type Type = 
-    | Type_General
-    | Type_Enum
+export type AnalysisCommandArgument = {
+    kind: "argument",
+    name: string,
+    description: string | false,
+    type: string | false,
+    enum: { string } | false
+}
+export type AnalysisCommand = {
+    kind: "command",
+    name: string,
+    description: string | false,
+    arguments: { AnalysisCommandArgument },
+}
+
 
 return {}

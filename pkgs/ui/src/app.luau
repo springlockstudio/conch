@@ -1,5 +1,3 @@
-local RunService = game:GetService("RunService")
-
 local vide = require("../roblox_packages/vide")
 local state = require("./state")
 local conch = require("../roblox_packages/conch_glue")
@@ -11,12 +9,14 @@ local screen = require("./components/screen")
 local corner = require("./components/corner")
 local textbox = require("./components/textbox")
 local gap = require("./components/gap")
+local suggestion = require("./components/suggestion")
 local theme = require("./theme")
 
 local values = vide.values
 local source = vide.source
 local derive = vide.derive
 local show = vide.show
+local changed = vide.changed
 
 return function()
 
@@ -33,16 +33,27 @@ return function()
     local raw_text = source("")
     local editable = source(true)
     local focused = source(true)
+    local cursor_position = source(0)
+    local absolute_position = source(Vector2.zero)
     local pending = source()
 
-    local syntax_error = derive(function()
+    local input = derive(function()
         if pending() then
-            local status = conch.parse(pending().src .. raw_text(), false)
-            return if status.status == "error" then status.why else false
+            return pending().src .. raw_text()
         else
-            local status = conch.parse(raw_text(), false)
-            return if status.status == "error" then status.why else false
+            return raw_text()
         end
+    end)
+
+    local syntax_error = derive(function()
+        local status = conch.parse(input())
+        return if status.status == "error" then status.why else false
+    end)
+
+    local analysis = derive(function()
+        local result = conch.analyze(input(), cursor_position())
+        
+        return result
     end)
 
     return screen {
@@ -63,17 +74,15 @@ return function()
                 text = raw_text,
                 update_text = raw_text,
                 placeholder = "Enter your command",
-                focused = focused,
-                update_focused = focused,
                 text_size = 20,
                 xalignment = Enum.TextXAlignment.Left,
                 editable = editable,
                 multiline = function()
                     if pending() then
-                        local status = conch.parse(pending().src .. raw_text(), true)
+                        local status = conch.parse(pending().src .. raw_text(), "yield")
                         return status.status == "pending"
                     else
-                        local status = conch.parse(raw_text(), true)
+                        local status = conch.parse(raw_text(), "yield")
                         return status.status == "pending"
                     end
                 end,
@@ -95,27 +104,39 @@ return function()
                         conch.execute(tree)
                         editable(true)
                     end
-                end
+                end,
+
+                focused = focused,
+                update_focused = focused,
+
+                {
+                    CursorPosition = cursor_position,
+                    changed("CursorPosition", cursor_position)
+                }
             },
 
             padding { padding = 12 },
             flex():fill():vertical("center"):horizontal("left"),
+
+            changed("AbsolutePosition", absolute_position)
         },
 
-        show(syntax_error, function()
-            return background {
-                height = 24,
-                layout = layout,
-                color = theme.background():Lerp(theme.text_error(), 0.1),
+        show(analysis, function()
+            return vide.create "Folder" {
+                suggestion {
+                    x = function()
+                        return cursor_position() * 10 + absolute_position().X
+                    end,
+                    y = function()
+                        return absolute_position().Y - 4
+                    end,
     
-                flex():fill():vertical("center"):horizontal("left"),
-                padding { padding = 8 },
-    
-                text {
-                    text = syntax_error,
-                    text_size = 18,
-                    text_style = "error",
-                    xalignment = Enum.TextXAlignment.Left,
+                    analyzing = function()
+                        return analysis().analyzing
+                    end,
+                    suggestions = function()
+                        return analysis().suggestions
+                    end
                 }
             }
         end),

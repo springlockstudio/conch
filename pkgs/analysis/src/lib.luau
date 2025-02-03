@@ -1,81 +1,109 @@
-local ast = require("../luau_packages/conch_ast")
+local ast = require("./optional_ast")
 local types = require("../luau_packages/conch_types")
 
 local state: types.VirtualMachine
 
-type ASTState = 
-    | "none"
-    | "stat"
-    | "expr"
-    | "expr-cmd"
-    | "cmd"
+type LogKind = types.LogKind
+type AnalysisSuggestion = types.AnalysisSuggestion
+type AnalysisInformation = types.AnalysisInformation
 
-local function obtain_function_information(fn: (...any) -> ...any)
+type AnalysisCommandArgument = types.AnalysisCommandArgument
+type AnalysisCommand = types.AnalysisCommand
 
-end
-local LOGS = {}
-local state: { ASTState } = {}
-local state_n = 0
+export type FeedAnalysisOptions = {
+    code: string,
+    where: number,
 
-local function LOG(kind: "normal" | "warn" | "error" | "info", text: string)
-    table.insert(LOGS, { kind = kind, text = text })
-end
+    variables: { [string]: any },
+    commands: { AnalysisCommand }
+}
 
-local function PUSH(state: ASTState)
-    state_n += 1
-    state[state_n] = state
-end
+type Node =
+    | ast.Command
+    | ast.Expression_Boolean
+    | ast.Expression_Evaluate
+    | ast.Expression_Identifier
+    | ast.Expression_Lambda
+    | ast.Expression_Lambda
+    | ast.Expression_Nil
+    | ast.Expression_Number
+    | ast.Expression_String
+    | ast.Expression_Table
+    | ast.Expression_Var
 
-local function POP(state: ASTState)
-    state_n -= 1
-end
+local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInformation
 
-local function within(token: types.Token)
-    return pos >= token.span.x and pos <= token.span.y
-end
+    return {
+        at = options.where,
+        text = "",
+        logs = {},
+        analyzing = {
+            kind = "command",
+            name = "string",
+            description = "string | false",
+        },
+        suggestions = { {
+            name = "example-suggestion",
 
-local function process_expression(expr: types.ExpressionOrCommand)
-    if expr.kind == "boolean" then
+            replace = vector.create(0, 5, 0),
+            with = "mraow"
+        } }
+    }
 
-    elseif expr.kind == "command" then
+    -- local LOGS = {}
+    -- local where = options.where
 
-    elseif expr.kind == "evaluate" then
+    -- local function LOG(kind: LogKind, text: string)
+    --     table.insert(LOGS, { kind = kind, text = text })
+    -- end
+
+    -- local function no_suggestions(text: string)
+    --     return {
+    --         at = where,
+    --         text = text,
+    --         logs = LOGS,
+    --         suggestions = {}
+
+    --     }
+    -- end
+
+    -- local processing = options.block
+
+    -- local parse_if
+    -- local parse_assignment
+    -- local parse_command
+    -- local parse_return
+    -- local parse_for
+    -- local parse_while
+    -- local parse_block
+
+    -- function parse_if(stat: ast.Stat_If)
         
-    elseif expr.kind == "lambda" then
+    -- end
 
-    elseif expr.kind == "nil" then
+    -- function parse_block(block: ast.Block)
+    --     for _, statement in block.body do
+    --         if statement.span.y > where then continue end
+    
+    --         return if statement.kind == "if" then
+    --             parse_if(statement)
+    --         elseif statement.kind == "assignment" then
+    --             parse_assignment(statement)
+    --         elseif statement.kind == "command" then
+    --             parse_command(statement)
+    --         elseif statement.kind == "return" then
+    --             parse_return(statement)
+    --         elseif statement.kind == "for" then
+    --             parse_for(statement)
+    --         elseif statement.kind == "while" then
+    --             parse_while(statement)
+    --         else no_suggestions("")
+    --     end
+    -- end
 
-    elseif expr.kind == "number" then
-
-    elseif expr.kind == "string" then
-
-    elseif expr.kind == "table" then
-
-    elseif expr.kind == "var" then
-
-    end
+    -- return process_block(options.block)
 end
 
-local function process_assignment(stat: types.Stat_Assign)
-    if within(stat.left) then return stat end
-    PUSH "expr-cmd"
-    local value = process_assignment(stat.right)
-    POP ()
-    return value
-end
-
-local function process_block(block: types.Block)
-    PUSH "stat"
-
-    for _, stat in block.body do
-        local value = if stat.kind == "assignment" then
-            process_assignment(stat)
-        else error("unrecognized")
-        
-        if value ~= false then return value end
-    end
-
-    POP ()
-    return false
-end
-
+return {
+    generate_analysis_info = generate_analysis_info
+}

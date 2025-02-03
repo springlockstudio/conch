@@ -89,6 +89,11 @@ return function()
         return self
     end
 
+    function mt:gap(px: number)
+        list.Padding = UDim.new(0, px)
+        return self
+    end
+
     return setmetatable(t, {__index = mt})
 
 end

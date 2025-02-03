@@ -8,6 +8,8 @@ local types = require("./types")
 local state = require("./state")
 local zap = require("./network/zap")
 local user = require("./user")
+local intel = require("../luau_packages/intel")
+local ctypes = require("../luau_packages/types")
 
 local IS_SERVER = RunService:IsServer()
 
@@ -18,7 +20,7 @@ local commands: { [string]: types.CommandRepresentation } = {}
 local console: types.Console = {
     vm = vm,
     commands = commands,
-    output = print
+    output = print,
 }
 
 local function replicate_to_player(player: Player, representation: types.CommandRepresentation)
@@ -78,11 +80,32 @@ local function register_command(name: string, fn: (...any) -> (...any), ...: str
     return representation
 end
 
+local function analyze(src: string, where: number): ctypes.AnalysisInformation
+    local combined_variables = {}
+
+    for global, value in vm.globals do
+        combined_variables[global] = value
+    end
+
+    for index, key in vm_state.locals do
+        combined_variables[key] = vm.locals[index]
+    end
+
+    return intel.generate_analysis_info({
+        code = src,
+        where = where,
+
+        variables = combined_variables,
+        commands = {}
+    })
+end
+
 return {
     console = console,
     register_command = register_command,
     replicate_to_player = replicate_to_player,
     execute = execute,
+    analyze = analyze,
     
     ast = ast,
 }

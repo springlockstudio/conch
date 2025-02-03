@@ -218,8 +218,14 @@ return {
     register_default_commands = bootstrap,
 
     console = console.console,
+    analyze = console.analyze,
 
     _ = {
+
+        obtain_intellisense = function()
+
+        end,
+
         create_user = user.create_user,
         get_user = user.get_user,
         disconnect_user = user.disconnect_user,

@@ -5,19 +5,18 @@ local create = vide.create
 local read = vide.read
 
 type Can<T> = T | () -> T
-type Background = {
+type Container = {
     read width: Can<number>?,
     read height: Can<number>?,
     read x: Can<number>?,
     read y: Can<number>?,
     read auto: Can<Enum.AutomaticSize>?,
-    read color: Can<Color3>?,
     read layout: Can<number>?,
     
     [number]: unknown
 }
 
-return function(props: Background)
+return function(props: Container)
 
     return create "Frame" {
         Size = function()
@@ -29,8 +28,7 @@ return function(props: Background)
         AutomaticSize = props.auto,
         LayoutOrder = props.layout,
 
-        BackgroundColor3 = props.color or theme.background,
-        BackgroundTransparency = theme.background_transparency,
+        BackgroundTransparency = 1,
 
         unpack(props)
     }

@@ -1,7 +1,6 @@
 --!strict
 local types = require("../luau_packages/types")
 
-
 export type TokenKindText = types.TokenKindText
 export type TokenKindRest = types.TokenKindRest
 export type Token<T=TokenKindRest|TokenKindText> = types.Token<T>
@@ -340,7 +339,6 @@ local function parse(input: buffer, can_yield: boolean?)
 
         return lookahead_kind == kind
     end
-
     
     local function yield()
         if can_yield then
@@ -356,7 +354,6 @@ local function parse(input: buffer, can_yield: boolean?)
             lookahead_kind = lookahead_token.kind
         end
     end
-
 
     local function display(token: Token): string
         local kind = token.kind

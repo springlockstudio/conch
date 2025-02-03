@@ -192,6 +192,8 @@ local function create_vm()
 
     return {
         commands = commands,
+        globals = globals,
+        locals = locals,
         run = run
     }
 
