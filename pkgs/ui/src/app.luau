@@ -16,7 +16,6 @@ local theme = require("./theme")
 local values = vide.values
 local source = vide.source
 local derive = vide.derive
-local effect = vide.effect
 local show = vide.show
 
 return function()

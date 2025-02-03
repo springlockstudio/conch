@@ -66,41 +66,49 @@ export type Token<T=TokenKind> = {
 
 export type Expression_Nil = {
     read kind: "nil",
+    read span: Span,
     read token: Token<"nil">
 }
 
 export type Expression_Boolean = {
     read kind: "boolean",
+    read span: Span,
     read token: Token<"true"> | Token<"false">
 }
 
 export type Expression_Number = {
     read kind: "number",
+    read span: Span,
     read token: Token<"number">
 }
 
 export type Expression_String = {
     read kind: "string",
+    read span: Span,
     read token: Token<"string">
 }
 
 export type Expression_Table = {
     read kind: "table",
+    read span: Span,
     read table: Table
 }
 
 export type Expression_Lambda = {
     read kind: "lambda",
+    read span: Span,
     read body: FunctionBody
 }
 
 export type Expression_Evaluate = {
     read kind: "evaluate",
+    read span: Span,
     read body: ExpressionOrCommand
 }
 
 export type Expression_Var = {
 	read kind: "var",
+    read span: Span,
 	read var: Var,
 }
 
@@ -116,16 +124,19 @@ export type Expression =
 
 export type VarRoot_Global = {
     read kind: "global",
+    read span: Span,
     read token: Token<"identifier">
 }
 
 export type VarRoot_Name = {
 	read kind: "name",
+    read span: Span,
     read name: Token<"identifier">,
 }
 
 export type VarRoot_Paren = {
 	read kind: "paren",
+    read span: Span,
 	read expr: ExpressionOrCommand,
 }
 
@@ -136,11 +147,13 @@ export type VarRoot =
 
 export type VarSuffix_NameIndex = {
     read kind: "nameindex",
+    read span: Span,
     read name: Token<"identifier">,
 }
 
 export type VarSuffix_ExprIndex = {
     read kind: "exprindex",
+    read span: Span,
     read expr: ExpressionOrCommand,
 }
 
@@ -150,12 +163,14 @@ export type VarSuffix =
     
 export type Var = {
     read prefix: VarRoot,
+    read span: Span,
     read suffixes: { VarSuffix }
 }
 
 export type Command = {
     read kind: "command",
     read prefix: Var,
+    read span: Span,
     read arguments: { Expression }
 }
 
@@ -165,18 +180,21 @@ export type ExpressionOrCommand =
 
 export type TableField_NameKey = {
     read kind: "namekey",
+    read span: Span,
     read name: Token<"identifier">,
     read value: Expression
 }
 
 export type TableField_ExprKey = {
     read kind: "exprkey",
+    read span: Span,
     read key: Expression,
     read value: Expression
 }
 
 export type TableField_NoKey = {
     read kind: "nokey",
+    read span: Span,
     read value: Expression
 }
 
@@ -186,31 +204,37 @@ export type TableField =
     | TableField_NoKey  
 
 export type Table = {
+    read span: Span,
     read fields: { TableField }
 }
 
 export type Stat_Assign = {
     read kind: "assignment",
+    read span: Span,
     read left: Token<"identifier">,
     read right: ExpressionOrCommand
 }
 
 export type FunctionBody = {
     read arguments: { Token<"identifier"> },
-    read block: Block
+    read block: Block,
+    read span: Span,
 }
 
 export type Last_Return = {
     read kind: "return",
+    read span: Span,
     values: { ExpressionOrCommand }
 }
 
 export type Last_Continue = {
-    read kind: "continue"
+    read kind: "continue",
+    read span: Span,
 }
 
 export type Last_Break = {
-    read kind: "break"
+    read kind: "break",
+    read span: Span,
 }
 
 export type LastStatement =
@@ -220,25 +244,29 @@ export type LastStatement =
 
 export type If = {
     condition: ExpressionOrCommand,
-    block: Block
+    block: Block,
+    read span: Span,
 }
 
 export type Stat_If = {
     read kind: "if",
     read ifs: { If },
-    read fallback: Block?
+    read fallback: Block?,
+    read span: Span,
 }
 
 export type Stat_While = {
     read kind: "while",
     read expression: ExpressionOrCommand,
-    read block: Block
+    read block: Block,
+    read span: Span,
 }
 
 export type Stat_For = {
     read kind: "for",
     read expression: ExpressionOrCommand,
-    read call: FunctionBody
+    read call: FunctionBody,
+    read span: Span,
 }
 
 export type Statement =
@@ -250,7 +278,8 @@ export type Statement =
 
 export type Block = {
     read body: { Statement },
-    read last_statement: LastStatement?
+    read last_statement: LastStatement?,
+    read span: Span,
 }
 
 -- Compiler / VM
