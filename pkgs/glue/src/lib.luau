@@ -5,6 +5,7 @@ local user = require("./user")
 local state = require("./state")
 local types = require("./types")
 local client = require("./client")
+local bootstrap = require("./bootstrap")
 local virtual_machine = require("./virtual_machine")
 local zap = require("./network/zap")
 
@@ -156,6 +157,8 @@ return {
     initiate_default_lifecycle = initiate_default_lifecycle,
     has_permissions = user.has_permissions,
     set_role = set_role,
+
+    register_default_commands = bootstrap,
 
     console = virtual_machine.console,
 

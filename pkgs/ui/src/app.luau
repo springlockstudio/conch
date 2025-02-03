@@ -29,45 +29,8 @@ return function()
         state.logs(logs)
     end
 
-    local function concat(...: string)
-        local t = { ... }
-        for i, v in t do t[i] = tostring(v) end
-        return table.concat(t, " ")
-    end
-
-    local function print(...)
-        local text = concat(...)
-        output { kind = "normal", text = text }
-    end
-    
-    local function error(...)
-        local text = concat(...)
-        output { kind = "error", text = text }
-        -- error(text)
-    end
-    
-    local function warn(...)
-        local text = concat(...)
-        output { kind = "warn", text = text }
-    end
-    
-    local function info(...)
-        local text = concat(...)
-        output { kind = "info", text = text }
-    end
-
-    local i = 0
-    local function count()
-        i += 1
-        return i
-    end
-
-    conch.register("print", print)
-    conch.register("error", error)
-    conch.register("warn", warn)
-    conch.register("info", info)
+    conch.register_default_commands()
     conch.register("wait", task.wait)
-    conch.register("count", count)
     conch.console.output = output
     
     local raw_text = source("")
@@ -93,11 +56,12 @@ return function()
         display_order = 100_000,
         enabled = state.opened,
 
-        flex():fill("horizontal"),
+        flex():fill("horizontal"):vertical("bottom"),
         padding { padding = 12 },
 
         background { 
             height = 50,
+            layout = 1,
             corner(6),
 
             textbox {
@@ -141,10 +105,10 @@ return function()
 
         gap { height = 4 },
 
-        values(state.logs, function(log: conch.Log, layout: number)
+        values(state.logs, function(log: conch.Log, layout: () -> number)
             return background {
                 height = 24,
-                layout = layout,
+                layout = function() return -layout() - 1 end,
                 color = theme.background():Lerp(
                     if log.kind == "normal" then theme.text()
                     elseif log.kind == "info" then theme.text_info()
