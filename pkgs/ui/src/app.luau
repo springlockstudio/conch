@@ -136,7 +136,7 @@ return function()
                 ),
     
                 flex():fill():vertical("center"):horizontal("left"),
-                padding { x = 8, y = 0 },
+                padding { x = 8, y = 3 },
     
                 text {
                     text = log.text,
