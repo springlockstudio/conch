@@ -38,10 +38,8 @@ return function()
         output { kind = "info", text = text }
     end
 
-    local i = 0
-    local function count()
-        i += 1
-        return i
+    local function set(t: any, key: any, value: any)
+        t[key] = value
     end
 
     virtual_machine.register_command("print", print)
@@ -49,5 +47,6 @@ return function()
     virtual_machine.register_command("warn", warn)
     virtual_machine.register_command("info", info)
     virtual_machine.register_command("vector", vector.create)
+    virtual_machine.register_command("set", set)
 
 end

@@ -4,7 +4,7 @@ local vm = require("../pkgs/vm/src/lib")
 local testkit = require("./testkit")
 
 
-local block = ast(buffer.fromstring "print \"")
+local block = ast(buffer.fromstring "print { test = true }")
 
 testkit.print(block)
 local instructions = compiler(block, { instructions = {}, locals = {}, upvalues = {} })

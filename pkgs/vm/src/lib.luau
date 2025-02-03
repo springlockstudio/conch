@@ -157,7 +157,8 @@ local function create_vm()
         elseif instruction.kind == "set_local" then
             locals[instruction.index] = POP()
         elseif instruction.kind == "set_table" then
-            local t, k, v = POPN(3)
+            local v, k = POP(), POP()
+            local t = stack[n]
             t[k] = v
         elseif instruction.kind == "return" then
             LOG("stack", #stack, stack[1])
