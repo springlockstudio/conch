@@ -760,7 +760,7 @@ local function parse(input: buffer, can_yield: boolean?)
                 table.insert(statements, parse_command())
             elseif current_is ";" then
                 consume()
-            elseif current_kind == "eof" and delimiter ~= "eof" then
+            elseif current_kind == "eof" and delimiter ~= "eof" and can_yield then
                 yield()
             elseif current_kind == delimiter then
                 break

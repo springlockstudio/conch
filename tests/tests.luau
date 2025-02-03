@@ -4,11 +4,11 @@ local vm = require("../pkgs/vm/src/lib")
 local testkit = require("./testkit")
 
 local block
-local status = ast("if (true) {\n}", true)
+local status = ast("while (true) {", false)
 
-if status.status == "pending" then
-    status = status.append("| { print Hello World }")
-end
+-- if status.status == "pending" then
+--     status = status.append("| { print Hello World }")
+-- end
 
 print(status.status, status.why)
 

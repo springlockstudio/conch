@@ -2,6 +2,8 @@ local types = require("../luau_packages/types")
 
 type VirtualMachine = types.VirtualMachine
 
+local MAX_EXECUTION_TIME = 5
+
 local function error_handler(msg: string)
     error(msg)
 end
@@ -13,6 +15,7 @@ end
 
 local function create_vm()
 
+    local start = os.clock()
     local locals = {}
     local globals = {}
     local commands = {}
@@ -55,6 +58,7 @@ local function create_vm()
     end
 
     local function process(i: types.Instruction)
+        if os.clock() > (start + MAX_EXECUTION_TIME) then error("reached execution time limit", 0) end
         -- task.wait()
         local instruction = i
         -- LOG("RUNNING", i.kind)
@@ -102,6 +106,7 @@ local function create_vm()
             local body = instruction.body
             local function VM_FN(...)
                 local state = {
+                    start = start,
                     locals = locals,
                     globals = globals,
                     commands = commands,
@@ -114,6 +119,7 @@ local function create_vm()
                 -- LOG("stack at", n)
                 local values = { ... }
                 locals = {}
+                start = os.clock()
                 stack = values
                 n = instruction.arguments
                 -- LOG("starting with", n)
@@ -130,6 +136,7 @@ local function create_vm()
                 globals = state.globals
                 commands = state.commands
                 stack = state.stack
+                start = state.start
                 n = state.n
                 instruction_at = state.instruction_at
                 instruction_end = state.instruction_end
@@ -167,6 +174,7 @@ local function create_vm()
     end
 
     local function run(instructions: { types.Instruction })
+        start = os.clock()
         instruction_at = 1
         instruction_end = #instructions
 
@@ -179,6 +187,8 @@ local function create_vm()
         n = 0
         return old_n, unpack(stack, 1, n)
     end
+
+    start = os.clock()
 
     return {
         commands = commands,

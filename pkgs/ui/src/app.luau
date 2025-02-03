@@ -36,18 +36,14 @@ return function()
     local focused = source(true)
     local pending = source()
 
-    local tree = derive(function()
-        if pending() then
-            local status = conch.parse(pending().src, true)
-            return status
-        else
-            local status = conch.parse(raw_text(), true)
-            return status
-        end
-    end)
-
     local syntax_error = derive(function()
-        return if tree().status == "error" then tree().why else false
+        if pending() then
+            local status = conch.parse(pending().src .. raw_text(), false)
+            return if status.status == "error" then status.why else false
+        else
+            local status = conch.parse(raw_text(), false)
+            return if status.status == "error" then status.why else false
+        end
     end)
 
     return screen {
@@ -74,7 +70,13 @@ return function()
                 xalignment = Enum.TextXAlignment.Left,
                 editable = editable,
                 multiline = function()
-                    return tree().status == "pending"
+                    if pending() then
+                        local status = conch.parse(pending().src .. raw_text(), true)
+                        return status.status == "pending"
+                    else
+                        local status = conch.parse(raw_text(), true)
+                        return status.status == "pending"
+                    end
                 end,
 
                 enter = function(value)
