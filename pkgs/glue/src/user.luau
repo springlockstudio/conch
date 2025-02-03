@@ -25,6 +25,7 @@ local function create_user(
         player = options.player,
 
         disconnected = false,
+        dirty = false,
         roles = {}
     }
 
@@ -41,6 +42,7 @@ local function create_user(
 end
 
 local function has_permissions(user: types.UserPublic, ...: types.Permission)
+    -- print("checking if", user.name, "with roles", user.roles, "has permission to run", ...)
     local permissions_necessary = { ... }
 
     for _, role in user.roles do
@@ -80,7 +82,10 @@ local function give_roles(user: types.UserPublic, ...: types.Role)
         table.insert(new_roles, role)
     end
 
+    self.roles = new_roles
+
     if IS_SERVER and self.player then
+        self.dirty = true
         zap.update_user_roles.fire(
             self.player,
             { id = self.id, roles = new_roles }
@@ -104,6 +109,7 @@ local function remove_roles(user: types.UserPublic, ...: types.Role)
     self.roles = new_roles
     
     if RunService:IsServer() and self.player then
+        self.dirty = true
         zap.update_user_roles.fire(
             self.player,
             { id = self.id, roles = new_roles }

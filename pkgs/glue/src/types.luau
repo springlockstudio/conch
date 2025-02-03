@@ -6,6 +6,7 @@ export type User = {
     read player: Player | false,
 
     disconnected: boolean,
+    dirty: boolean,
     roles: { string },
 }
 
@@ -16,6 +17,7 @@ export type UserPublic = {
 
     read disconnected: boolean,
     read roles: { string },
+    read dirty: boolean,
 }
 
 export type Log = {
@@ -65,7 +67,7 @@ export type SignalPublic<T...> = {
     read connect: (any, (T...) -> ()) -> Connection,
 }
 
-export type Result = { type: "ok", results: { any } } | { type: "err" }
+export type Result = { type: "ok", results: unknown } | { type: "err" }
 
 export type Role = string
 export type Permission = string

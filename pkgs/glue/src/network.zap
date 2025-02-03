@@ -88,8 +88,21 @@ event receive_server_results = {
     data: struct {
         invocation_id: u32,
         results: enum "type" {
-            ok { results: unknown[] },
+            ok { results: unknown },
             err {}
         }
+    }
+}
+
+--[[
+Sends a server log to the player.
+]]
+event log = {
+    from: Server,
+    type: Reliable,
+    call: SingleSync,
+    data: struct {
+        kind: enum { normal, info, warn, error },
+        text: string
     }
 }

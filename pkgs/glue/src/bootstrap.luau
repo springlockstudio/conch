@@ -2,13 +2,18 @@
 Bootstraps some basic functions onto the command line.
 ]]
 
-local virtual_machine = require("./virtual_machine")
+local RunService = game:GetService("RunService")
+
+local console = require("./console")
 local types = require("./types")
+
+local IS_SERVER = RunService:IsServer()
+local IS_CLIENT = RunService:IsClient()
 
 return function()
 
     local function output(t: types.Log)
-        virtual_machine.console.output(t)
+        console.console.output(t)
     end
 
     local function concat(...: string)
@@ -42,11 +47,14 @@ return function()
         t[key] = value
     end
 
-    virtual_machine.register_command("print", print)
-    virtual_machine.register_command("error", error)
-    virtual_machine.register_command("warn", warn)
-    virtual_machine.register_command("info", info)
-    virtual_machine.register_command("vector", vector.create)
-    virtual_machine.register_command("set", set)
+    -- print("registering commands")
+    if IS_CLIENT then
+        console.register_command("print", print)
+        console.register_command("error", error)
+        console.register_command("warn", warn)
+        console.register_command("info", info)
+        console.register_command("vector", vector.create)
+        console.register_command("set", set)
+    end
 
 end

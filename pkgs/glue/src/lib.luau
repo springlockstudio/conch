@@ -6,7 +6,7 @@ local state = require("./state")
 local types = require("./types")
 local client = require("./client")
 local bootstrap = require("./bootstrap")
-local virtual_machine = require("./virtual_machine")
+local console = require("./console")
 local zap = require("./network/zap")
 
 export type Log = types.Log
@@ -45,8 +45,12 @@ local function create_command_context(user: types.User, invocation_id: number | 
     end
 end
 
+local function get_command_context(): CommandContext?
+    return state.command_context[coroutine.running()]
+end
+
 local function initiate_user_replication(user: types.UserPublic)
-    for _, command in virtual_machine.console.commands do
+    for _, command in console.console.commands do
         if not has_permissions(user, unpack(command.permissions)) then continue end
 
         zap.register_command.fire(
@@ -94,8 +98,8 @@ local function invoke_server_command(
         arguments: { unknown }
     }
 )
-    local user = get_user(user.obtain_user_key(player))
-    local command = virtual_machine.console.commands[data.name]
+    local user = get_user(player)
+    local command = console.console.commands[data.name]
 
     local function fail(): never
         zap.receive_server_results.fire(
@@ -106,35 +110,64 @@ local function invoke_server_command(
     if not command or not user then return fail() end
     if not has_permissions(user, unpack(command.permissions)) then return fail() end
 
-    local pop = create_command_context()
+    local pop = create_command_context(user, data.invocation_id)
 
     local function handle(ok: boolean, ...: any)
         pop()
         if not ok then warn(...); return fail() end
         return zap.receive_server_results.fire(
             player,
-            { invocation_id = data.invocation_id, results = { type = "ok", results = { ... } }}
+            {
+                invocation_id = data.invocation_id,
+                results = {
+                    type = "ok",
+                    results = { ... }
+                }
+            }
         )
     end
 
     return handle(pcall(command.callback, unpack(data.arguments)))
+end
 
+local function resend_new_commands(user: types.User)
+    if not user.dirty then return end
+
+    for _, cmd in console.console.commands do
+        console.replicate_to_player(user.player, cmd)
+    end
+
+    user.dirty = false
 end
 
 local function initiate_default_lifecycle()
-    
-    Players.PlayerAdded:Connect(get_user)
-    Players.PlayerRemoving:Connect(disconnect_user_for_player)
-    FOREACH(Players:GetPlayers(), create_user_for_player)
 
     if IS_CLIENT then
+        -- print("connected events")
         zap.create_user.set_callback(client.create_local_user)
         zap.receive_server_results.set_callback(client.receive_server_results)
         zap.register_command.set_callback(client.register_command)
         zap.update_role_permissions.set_callback(client.update_role_permissions)
         zap.update_user_roles.set_callback(client.update_user_roles)
+        zap.log.set_callback(client.log)
+
+        RunService.Heartbeat:Connect(zap.send_events)
     elseif IS_SERVER then
-        zap.invoke_server_command.set_callback(invoke_server_command)
+        -- print("initiated lifecycle")
+        Players.PlayerAdded:Connect(get_user)
+        Players.PlayerRemoving:Connect(disconnect_user_for_player)
+        FOREACH(Players:GetPlayers(), create_user_for_player)
+        FOREACH(Players:GetPlayers(), function(player)
+            resend_new_commands(get_user(player))
+        end)
+        zap.invoke_server_command.on(invoke_server_command)
+        RunService.Heartbeat:Connect(zap.send_events)
+        RunService.Heartbeat:Connect(function()
+            for _, user in state.users do
+                resend_new_commands(user)
+            end
+        end)
+
     end
 end
 
@@ -146,21 +179,39 @@ return {
         assert(local_user, "unable to run commands without a local user")
 
         local pop = create_command_context(user, invocation_id)
-        virtual_machine.execute(src)
+        console.execute(src)
         pop()
     end,
 
     register = function(name: string, fn: (...any) -> (...any), ...: string)
-        virtual_machine.register_command(name, fn, ...)
+        console.register_command(name, fn, ...)
     end,
 
     initiate_default_lifecycle = initiate_default_lifecycle,
     has_permissions = user.has_permissions,
-    set_role = set_role,
+    set_role_permissions = set_role,
+
+    give_roles = user.give_roles,
+    remove_roles = user.remove_roles,
+    get_user = get_user,
+
+    get_command_context = get_command_context,
+
+    log = function(kind: "warn" | "info" | "error" | "normal", text: string)
+        if IS_SERVER then
+            local context = state.command_context[coroutine.running()]
+            if not context then return end
+            local player = context.executor.player
+            if not player then return end
+            zap.log.fire(player, { kind = kind, text = text })
+        else
+            console.console.output({ kind = kind, text = text })
+        end
+    end,
 
     register_default_commands = bootstrap,
 
-    console = virtual_machine.console,
+    console = console.console,
 
     _ = {
         create_user = user.create_user,

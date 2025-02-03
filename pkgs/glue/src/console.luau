@@ -26,7 +26,7 @@ local function replicate_to_player(player: Player, representation: types.Command
     local player_user = state.users[key]
 
     if not player_user then return end
-    if user.has_permissions(player_user, unpack(representation.permissions)) then return end
+    if not user.has_permissions(player_user, unpack(representation.permissions)) then return end
 
     zap.register_command.fire(player, { name = representation.name, permissions = representation.permissions })
 end
@@ -69,6 +69,7 @@ local function register_command(name: string, fn: (...any) -> (...any), ...: str
 
     if IS_SERVER then
         for _, player in Players:GetPlayers() do
+            -- print("replicating to player", player)
             replicate_to_player(player, representation)
         end
     end
@@ -76,10 +77,9 @@ local function register_command(name: string, fn: (...any) -> (...any), ...: str
     return representation
 end
 
-register_command("print", print)
-
 return {
     console = console,
     register_command = register_command,
+    replicate_to_player = replicate_to_player,
     execute = execute
 }
