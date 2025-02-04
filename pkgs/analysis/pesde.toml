@@ -1,9 +1,13 @@
 name = "alicesaidhi/conch_analysis"
 version = "0.1.0"
+includes = ["src", "pesde.toml"]
 
 [target]
 environment = "luau"
 lib = "src/lib.luau"
+
+[indices]
+default = "https://github.com/daimond113/pesde-index"
 
 [dependencies]
 conch_ast = { workspace = "alicesaidhi/conch_ast" }

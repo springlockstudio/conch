@@ -5,4 +5,7 @@ version = "0.1.0"
 environment = "luau"
 lib = "lib.luau"
 
+[indices]
+default = "https://github.com/daimond113/pesde-index"
+
 [dependencies]

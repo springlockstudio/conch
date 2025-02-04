@@ -5,6 +5,9 @@ version = "0.1.0"
 environment = "roblox"
 lib = "src/lib.luau"
 
+[indices]
+default = "https://github.com/daimond113/pesde-index"
+
 [dependencies]
 ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "luau" }
 compiler = { workspace = "alicesaidhi/conch_compiler", version = "^", target = "luau" }
