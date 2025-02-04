@@ -10,7 +10,11 @@ type Background = {
     read height: Can<number>?,
     read x: Can<number>?,
     read y: Can<number>?,
-    read auto: Can<Enum.AutomaticSize>?,
+    read xs: Can<number>?,
+    read xy: Can<number>?,
+    read anchor: Can<{number}>?,
+    read zindex: Can<number>?,
+    read auto: Can<Enum.AutomaticSize | "X" | "Y" | "XY">?,
     read color: Can<Color3>?,
     read layout: Can<number>?,
     
@@ -21,11 +25,15 @@ return function(props: Background)
 
     return create "Frame" {
         Size = function()
-            return UDim2.fromOffset(read(props.width) or 0, read(props.height) or 0)
+            local width, height = read(props.width), read(props.height)
+            return UDim2.new(if width then 0 else 1, width or 0, if height then 0 else 1, height or 0)
         end,
         Position = function()
-            return UDim2.fromOffset(read(props.x) or 0, read(props.y) or 0)
+            return UDim2.new(read(props.xs) or 0, read(props.x) or 0, read(props.ys) or 0, read(props.y) or 0)
         end,
+        AnchorPoint = if props.anchor then function()
+            return Vector2.new(read(props.anchor)[1] or 0, read(props.anchor)[2] or 0)
+        end else nil,
         AutomaticSize = props.auto,
         LayoutOrder = props.layout,
 

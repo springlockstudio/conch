@@ -50,13 +50,10 @@ type Suggestion = {
 return function(props: Suggestion)
 
     return container {
-        x = props.x,
-        y = props.y,
-        
-        { ZIndex = 10000, AnchorPoint = Vector2.new(0, 1) },
-        
-        width = 300,
-        auto = Enum.AutomaticSize.Y,
+        x = props.x, y = props.y,
+        width = 300, auto = "Y",
+        anchor = {0, 1},
+        zindex = 10000,
 
         flex():column():gap(4):vertical("bottom"),
 
@@ -74,8 +71,8 @@ return function(props: Suggestion)
                 flex(),
 
                 background {
-                    width = 300,
                     height = 24,
+                    width = 300,
                     flex():column():between("horizontal"):vertical("center"),
                     padding {x = 4},
     
@@ -112,14 +109,13 @@ return function(props: Suggestion)
         end),
 
         background {
-            width = 200,
+            ys = 1,
+            width = 200, height = 0,
+            anchor = {0, 1},
+
             auto = Enum.AutomaticSize.Y,
 
-            { 
-                Position = UDim2.fromScale(0, 1),
-                AnchorPoint = Vector2.new(0, 1),
-                BackgroundTransparency = 0,
-            },
+            { BackgroundTransparency = 0, },
 
             flex():vertical("bottom"),
 
