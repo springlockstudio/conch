@@ -13,6 +13,7 @@ type AnalysisCommand = types.AnalysisCommand
 export type FeedAnalysisOptions = {
     code: string,
     where: number,
+    ast: ast.Block,
 
     variables: { [string]: any },
     commands: { AnalysisCommand }
@@ -51,20 +52,10 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
     -- }
 
     local LOGS = {}
-    local where = options.where - 1
+    local where = options.where
 
     local function LOG(kind: LogKind, text: string)
         table.insert(LOGS, { kind = kind, text = text })
-    end
-
-    local function no_suggestions(text: string)
-        return {
-            at = where,
-            text = text,
-            logs = LOGS,
-            suggestions = {}
-
-        }
     end
 
     local function get_span(from: ast.Surrounded<{span: vector}?, unknown?, unknown?>): vector
@@ -86,6 +77,12 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
         end
         
         return vector.create(x, y, 0)
+    end
+
+    local function get_text_token<T>(token: ast.Token<T>)
+        local span = token.span
+        local finish = span.x - where
+        return string.sub(token.text, 1, finish)
     end
 
     local function position_relative(span: vector): "before" | "after" | "within"
@@ -115,29 +112,44 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
     -- local parse_if
     -- local parse_expression
 
-    function parse_command(stat: ast.Command): AnalysisInformation
-        if position_relative(stat.prefix.span) == "within" then
-            local var = stat.prefix
+    local function no_suggestions(text: string)
+        return {
+            at = where,
+            text = text,
+            logs = LOGS,
+            suggestions = {},
+            ast = processing.value
+        }
+    end
 
-            if var.prefix.kind == "global" and position_relative(var.prefix.span) == "within" then
+    function parse_command(stat: ast.Command): AnalysisInformation
+        local pos = position_relative(stat.prefix.span)
+        print(pos)
+        if pos == "within" then
+            local var = stat.prefix
+            local prefix = var.prefix
+
+            if prefix.kind == "global" then
                 local suggestions: { AnalysisSuggestion } = {}
+                local text = get_text_token(prefix.token)
                 
                 for index, command in options.commands do
+                    if string.sub(command.name, 1, #text) ~= text then continue end
                     suggestions[index] = {
                         name = command.name,
                         description = command.description,
                         type = "Command",
 
                         replace = var.span,
-                        with = command.name
+                        with = command.name,
                     }
                 end
 
-                print("please")
                 return {
                     at = where,
-                    text = "",
+                    text = text,
                     logs = LOGS,
+                    ast = processing.value,
 
                     analyzing = nil,
                     suggestions = suggestions
@@ -145,6 +157,43 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             else
                 return no_suggestions("")
             end
+        elseif pos == "after" then
+            -- obtain the prefix
+            local var = stat.prefix
+            local prefix = var.prefix
+            local command_info: AnalysisCommand
+
+            if prefix.kind == "global" then
+                for index, command in options.commands do
+                    if command.name ~= prefix.token.text then continue end
+                    command_info = command
+                    break
+                end
+            end
+
+            if not command_info then return no_suggestions("") end
+
+            local index = 1
+            for i in stat.arguments do
+                index = i
+                if position_relative(argument.span) == "within" then break end
+            end
+            local arg_info = command_info.arguments[index]
+
+            if not arg_info then
+                LOG("warn", `no argument #{index}`)
+                return no_suggestions("")
+            end
+
+            return {
+                at = where,
+                text = text,
+                logs = LOGS,
+                ast = processing.value,
+
+                analyzing = arg_info,
+                suggestions = {}
+            }
         end
 
         return no_suggestions("")
@@ -170,25 +219,27 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
     -- end
 
     function process_block(block: ast.Block)
-        for _, statement in block.body do
-            if statement.span.y > where then continue end
-    
-            return if statement.kind == "if" then
-                no_suggestions("") -- parse_if_stat(statement)
-                elseif statement.kind == "assignment" then
-                no_suggestions("") -- parse_assignment(statement)
-                elseif statement.kind == "command" then
-                parse_command(statement)
-                elseif statement.kind == "return" then
-                no_suggestions("") -- parse_return(statement)
-                elseif statement.kind == "for" then
-                no_suggestions("") -- parse_for(statement)
-                elseif statement.kind == "while" then
-                no_suggestions("") -- parse_while(statement)
-                else no_suggestions("")
+        local statement
+        for _, stat in block.body do
+            statement = stat
+            local pos = position_relative(stat.span)
+            if pos == "before" then continue end
+            break
         end
-
-        return no_suggestions("")
+    
+        return if statement.kind == "if" then
+            no_suggestions("") -- parse_if_stat(statement)
+            elseif statement.kind == "assignment" then
+            no_suggestions("") -- parse_assignment(statement)
+            elseif statement.kind == "command" then
+            parse_command(statement)
+            elseif statement.kind == "return" then
+            no_suggestions("") -- parse_return(statement)
+            elseif statement.kind == "for" then
+            no_suggestions("") -- parse_for(statement)
+            elseif statement.kind == "while" then
+            no_suggestions("") -- parse_while(statement)
+            else no_suggestions("")
     end
 
     return process_block(block)
