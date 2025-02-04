@@ -6,10 +6,10 @@ local compiler = require("../luau_packages/compiler")
 local vm = require("../luau_packages/vm")
 local types = require("./types")
 local state = require("./state")
-local zap = require("./network/zap")
 local user = require("./user")
 local intel = require("../luau_packages/intel")
 local ctypes = require("../luau_packages/types")
+local net = require("./net")
 
 local IS_SERVER = RunService:IsServer()
 
@@ -30,7 +30,7 @@ local function replicate_to_player(player: Player, representation: types.Command
     if not player_user then return end
     if not user.has_permissions(player_user, unpack(representation.permissions)) then return end
 
-    zap.register_command.fire(player, { name = representation.name, permissions = representation.permissions })
+	net.server.fire_register_command(player, { name = representation.name, permissions = representation.permissions })
 end
 
 local busy = false

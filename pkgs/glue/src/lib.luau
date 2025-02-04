@@ -7,8 +7,8 @@ local types = require("./types")
 local client = require("./client")
 local bootstrap = require("./bootstrap")
 local console = require("./console")
-local zap = require("./network/zap")
 local ast = require("../luau_packages/ast")
+local net = require("./net")
 
 export type Log = types.Log
 export type CommandContext = types.CommandContext
@@ -30,7 +30,7 @@ local function set_role(role: types.Role, ...: types.Permission)
     state.roles[role] = { ... }
     
     if IS_SERVER then 
-        zap.update_role_permissions.fire_all({ role = role, permissions = { ... } })
+		net.server.fire_update_role_perms(role, { ... })
     end
 end
 
@@ -54,9 +54,10 @@ local function initiate_user_replication(user: types.UserPublic)
     for _, command in console.console.commands do
         if not has_permissions(user, unpack(command.permissions)) then continue end
 
-        zap.register_command.fire(
-            user.player, { name = command.name, permissions = command.permissions }
-        )
+		net.server.fire_register_command(user.player, {
+			name = command.name,
+			permissions = command.permissions
+		})
     end
 end
 
@@ -93,42 +94,28 @@ end
 
 local function invoke_server_command(
     player: Player,
-    data: {
-        name: string,
-        invocation_id: number,
-        arguments: { unknown }
-    }
+    data: net.InvokeCommandPacket
 )
     local user = get_user(player)
     local command = console.console.commands[data.name]
 
-    local function fail(): never
-        zap.receive_server_results.fire(
-            player, { invocation_id = data.invocation_id, results = { type = "err" } }
-        )
+    local function fail()
+		net.server.fire_failed_invoke_reply(player, data.invoke_id)
     end
 
     if not command or not user then return fail() end
     if not has_permissions(user, unpack(command.permissions)) then return fail() end
 
-    local pop = create_command_context(user, data.invocation_id)
+    local pop = create_command_context(user, data.invoke_id)
 
     local function handle(ok: boolean, ...: any)
         pop()
         if not ok then warn(...); return fail() end
-        return zap.receive_server_results.fire(
-            player,
-            {
-                invocation_id = data.invocation_id,
-                results = {
-                    type = "ok",
-                    results = { ... }
-                }
-            }
-        )
+		
+		return net.server.fire_successful_invoke_reply(player, data.invoke_id, { ... })
     end
 
-    return handle(pcall(command.callback, unpack(data.arguments)))
+    return handle(pcall(command.callback, unpack(data.args)))
 end
 
 local function resend_new_commands(user: types.User)
@@ -145,24 +132,30 @@ local function initiate_default_lifecycle()
 
     if IS_CLIENT then
         -- print("connected events")
-        zap.create_user.set_callback(client.create_local_user)
-        zap.receive_server_results.set_callback(client.receive_server_results)
-        zap.register_command.set_callback(client.register_command)
-        zap.update_role_permissions.set_callback(client.update_role_permissions)
-        zap.update_user_roles.set_callback(client.update_user_roles)
-        zap.log.set_callback(client.log)
+		net.client.init()
+		
+		net.client.on_command_registered(client.register_command)
+		net.client.on_invoke_reply(client.receive_server_results)
+		net.client.on_log_received(client.log)
+		net.client.on_user_info_received(client.create_local_user)
+		net.client.on_role_info_received(client.update_role_permissions)
+		net.client.on_user_roles_update(client.update_user_roles)
 
-        RunService.Heartbeat:Connect(zap.send_events)
+        -- RunService.Heartbeat:Connect(zap.send_events)
     elseif IS_SERVER then
+		net.server.init()
+		
         -- print("initiated lifecycle")
         Players.PlayerAdded:Connect(get_user)
         Players.PlayerRemoving:Connect(disconnect_user_for_player)
-        FOREACH(Players:GetPlayers(), create_user_for_player)
+        FOREACH(Players:GetPlayers(), get_user)
         FOREACH(Players:GetPlayers(), function(player)
             resend_new_commands(get_user(player))
         end)
-        zap.invoke_server_command.on(invoke_server_command)
-        RunService.Heartbeat:Connect(zap.send_events)
+		
+		net.server.on_command_invoke(invoke_server_command)
+		
+        -- RunService.Heartbeat:Connect(zap.send_events)
         RunService.Heartbeat:Connect(function()
             for _, user in state.users do
                 resend_new_commands(user)
