@@ -267,7 +267,6 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
                 if last.kind == "variadic" then
                     
                     if arg_analyzed then
-                        print(arg_analyzed.analyzing)
                         arg_analyzed.analyzing = arg_analyzed.analyzing or last
                         return arg_analyzed
                     end

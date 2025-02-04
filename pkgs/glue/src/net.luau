@@ -173,6 +173,13 @@ function net.client.on_invoke_reply(callback: (info: InvokeReplyPacket) -> ())
 	remotes.invoke_server_command.OnClientEvent:Connect(callback :: any)
 end
 
+function net.server.fire_log(player: Player, info: LogPacket)
+	assert(net.server.initialized, "server not initialized")
+	assert_run_context("server")
+
+	remotes.log:FireClient(player, info)
+end
+
 function net.server.fire_register_command(player: Player, info: RegisterCommandPacket)
 	assert(net.server.initialized, "server not initialized")
 	assert_run_context("server")
@@ -221,8 +228,6 @@ function net.server.fire_create_user(player: Player, id: string, name: string)
 		id = id,
 	}
 	
-	print("creating user", user_packet)
-	print(debug.traceback())
 	remotes.create_user:FireClient(player, user_packet)
 end
 

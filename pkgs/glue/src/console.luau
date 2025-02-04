@@ -66,7 +66,7 @@ local function register_command(name: string, info: {
     local representation: types.CommandRepresentation = {
         name = name or debug.info(fn, "n"),
         from_server = IS_SERVER,
-        permissions = info.permissions,
+        permissions = info.permissions or {},
         type_info = {
             kind = "command",
             name = name,

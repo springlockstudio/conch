@@ -201,7 +201,7 @@ return {
             if not context then return end
             local player = context.executor.player
             if not player then return end
-            zap.log.fire(player, { kind = kind, text = text })
+            net.server.fire_log(player, { kind = kind, text = text })
         else
             console.console.output({ kind = kind, text = text })
         end
@@ -214,12 +214,7 @@ return {
 
     _ = {
 
-        obtain_intellisense = function()
-
-        end,
-
         create_user = user.create_user,
-        get_user = user.get_user,
         disconnect_user = user.disconnect_user,
         create_local_user = function()
             local user = get_user("local")

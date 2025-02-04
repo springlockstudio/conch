@@ -2,7 +2,7 @@ local types = require("../luau_packages/types")
 
 type VirtualMachine = types.VirtualMachine
 
-local MAX_EXECUTION_TIME = 5
+local MAX_EXECUTION_TIME = 30
 
 local function error_handler(msg: string)
     error(msg)
@@ -71,7 +71,6 @@ local function create_vm()
                 instruction.results,
                 typeof(fn),
                 pcall(fn, unpack(t))
-
             )
         elseif instruction.kind == "goto" then
             instruction_at = instruction.to - 1

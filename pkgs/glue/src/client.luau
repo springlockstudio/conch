@@ -40,7 +40,7 @@ local function register_command(
     data: net.RegisterCommandPacket
 )
     -- warn("NEW SERVER COMMAND", data.name)
-    console.register_command(data.name, function(...)
+    console.register_quick(data.name, function(...)
         local thread = coroutine.running()
         invocation_id += 1
         state.continuations[invocation_id] = thread

@@ -10,6 +10,7 @@ local corner = require("./components/corner")
 local textbox = require("./components/textbox")
 local gap = require("./components/gap")
 local suggestion = require("./components/suggestion")
+local loading = require("./components/loading")
 local theme = require("./theme")
 
 local values = vide.values
@@ -23,15 +24,14 @@ return function()
     local function output(log)
         local logs = state.logs()
         table.insert(logs, 1, log)
+        table.remove(logs, 100)
         state.logs(logs)
     end
 
-    conch.register_default_commands()
-    conch.register_quick("wait", task.wait)
     conch.console.output = output
     
     local raw_text = source("")
-    local editable = source(true)
+    local working = source(false)
     local focused = source(true)
     local cursor_position = source(0)
     local absolute_position = source(Vector2.zero)
@@ -70,50 +70,57 @@ return function()
             layout = 1,
             corner(6),
 
-            textbox {
-                text = raw_text,
-                update_text = raw_text,
-                placeholder = "Enter your command",
-                text_size = 20,
-                xalignment = Enum.TextXAlignment.Left,
-                editable = editable,
-                multiline = function()
-                    if pending() then
-                        local status = conch.parse(pending().src .. raw_text(), "yield")
-                        return status.status == "pending"
-                    else
-                        local status = conch.parse(raw_text(), "yield")
-                        return status.status == "pending"
-                    end
-                end,
-
-                enter = function(value)
-                    raw_text("")
-                    focused(true)
-                    
-                    if pending() then
-                        pending(pending().append(value))
-                    else
-                        pending(conch.parse(value, true))
-                    end
-
-                    if pending().status ~= "pending" then
-                        local tree = pending()
-                        editable(false)
-                        pending(nil)
-                        conch.execute(tree)
-                        editable(true)
-                    end
-                end,
-
-                focused = focused,
-                update_focused = focused,
-
-                {
-                    CursorPosition = cursor_position,
-                    changed("CursorPosition", cursor_position)
+            show(working, function()
+                return loading {
+                    speed = 6,
+                    text_size = 20,
+                    xalignment = Enum.TextXAlignment.Left
                 }
-            },
+            end, function()
+                return textbox {
+                    text = raw_text,
+                    update_text = raw_text,
+                    placeholder = "Enter your command",
+                    text_size = 20,
+                    xalignment = Enum.TextXAlignment.Left,
+                    multiline = function()
+                        if pending() then
+                            local status = conch.parse(pending().src .. raw_text(), "yield")
+                            return status.status == "pending"
+                        else
+                            local status = conch.parse(raw_text(), "yield")
+                            return status.status == "pending"
+                        end
+                    end,
+    
+                    enter = function(value)
+                        raw_text("")
+                        focused(true)
+                        
+                        if pending() then
+                            pending(pending().append(value))
+                        else
+                            pending(conch.parse(value, true))
+                        end
+    
+                        if pending().status ~= "pending" then
+                            local tree = pending()
+                            working(true)
+                            pending(nil)
+                            conch.execute(tree)
+                            working(false)
+                        end
+                    end,
+    
+                    focused = focused,
+                    update_focused = focused,
+    
+                    {
+                        CursorPosition = cursor_position,
+                        changed("CursorPosition", cursor_position)
+                    }
+                }
+            end),
 
             padding { padding = 12 },
             flex():fill():vertical("center"):horizontal("left"),
