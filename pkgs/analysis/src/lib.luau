@@ -64,16 +64,16 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             x = from.left.span.x
         elseif from.value then
             x = from.value.span.x
-        elseif from.right then
+        else
             x = from.right.span.x
         end
 
         if from.right then
-            y = from.left.span.y
+            y = from.right.span.y
         elseif from.value then
             y = from.value.span.y
-        elseif from.left then
-            y = from.right.span.y
+        else
+            y = from.left.span.y
         end
         
         return vector.create(x, y, 0)
@@ -90,19 +90,19 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             elseif where < span.x then "before"
             else "after"
     end
-    
+
+    local processing = ast(options.code)
+    local block
+
     local function no_suggestions(text: string)
         return {
             at = where,
             text = text,
             logs = LOGS,
             suggestions = {},
-            ast = processing and processing.value
+            ast = processing and processing.status == "finished" and processing.value
         }
     end
-
-    local processing = ast(options.code)
-    local block
 
     if processing.status == "error" then
         LOG("error", processing.why)
@@ -111,18 +111,22 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
         block = processing.value
     end
 
-    -- local parse_if_stat
-    -- local parse_assignment
-    -- local parse_command
-    -- local parse_return
-    -- local parse_for
-    -- local parse_while
+    local process_if_stat
+    local process_assignment
+    local process_command
+    local process_return
+    local process_for
+    local process_while
     local process_block
-    local parse_command
+    local process_command
+    local process_function
+    local process_return
+    local process_expression
+    local process_expression_or_command
     -- local parse_if
     -- local parse_expression
 
-    function parse_command(stat: ast.Command): AnalysisInformation
+    function process_command(stat: ast.Command, expressions_too: boolean?): AnalysisInformation
         local pos = position_relative(stat.prefix.span)
         if pos == "within" then
             local var = stat.prefix
@@ -132,6 +136,76 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
                 local suggestions: { AnalysisSuggestion } = {}
                 local text = get_text_token(prefix.token)
                 local analyzing
+
+                if expressions_too and string.sub("true", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "true",
+                        type = "true",
+
+                        replace = var.span,
+                        with = "true",
+                    })
+                end
+
+                if expressions_too and string.sub("false", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "false",
+                        type = "false",
+
+                        replace = var.span,
+                        with = "false",
+                    })
+                end
+
+                if expressions_too and string.sub("nil", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "nil",
+                        type = "nil",
+
+                        replace = var.span,
+                        with = "nil",
+                    })
+                end
+
+                if not expressions_too and string.sub("for", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "for",
+                        type = "for",
+
+                        replace = var.span,
+                        with = "for",
+                    })
+                end
+
+                if not expressions_too and string.sub("if", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "if",
+                        type = "if",
+
+                        replace = var.span,
+                        with = "if",
+                    })
+                end
+
+                if not expressions_too and string.sub("while", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "while",
+                        type = "while",
+
+                        replace = var.span,
+                        with = "while",
+                    })
+                end
+
+                if not expressions_too and string.sub("else", 1, #text) == text then
+                    table.insert(suggestions, {
+                        name = "else",
+                        type = "else",
+
+                        replace = var.span,
+                        with = "else",
+                    })
+                end
                 
                 for index, command in options.commands do
                     if string.sub(command.name, 1, #text) ~= text then continue end
@@ -146,8 +220,6 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
                         with = command.name,
                     })
                 end
-                
-
                 return {
                     at = where,
                     text = text,
@@ -177,9 +249,14 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             if not command_info then return no_suggestions("") end
 
             local index = 1
+            local arg_analyzed: AnalysisInformation = no_suggestions("")
             for i, argument in stat.arguments do
-                if position_relative(argument.span) == "within" then break end
+                if position_relative(argument.span) == "within" then
+                    arg_analyzed = process_expression(argument) :: any
+                    break
+                end
                 if position_relative(argument.span) == "after" then index += 1 end
+
             end
             local arg_info = command_info.arguments[index]
 
@@ -188,9 +265,16 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
                 local last = command_info.arguments[#command_info.arguments]
 
                 if last.kind == "variadic" then
+                    
+                    if arg_analyzed then
+                        print(arg_analyzed.analyzing)
+                        arg_analyzed.analyzing = arg_analyzed.analyzing or last
+                        return arg_analyzed
+                    end
+
                     return {
                         at = where,
-                        text = text,
+                        text = "",
                         logs = LOGS,
                         ast = processing.value,
 
@@ -200,7 +284,12 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
                 end
 
                 LOG("warn", `no argument #{index}`)
-                return no_suggestions("")
+                return arg_analyzed or no_suggestions("")
+            end
+
+            if arg_analyzed then
+                arg_analyzed.analyzing = arg_analyzed.analyzing or arg_info
+                return arg_analyzed
             end
 
             return {
@@ -217,24 +306,89 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
         return no_suggestions("")
     end
 
-    -- function parse_if(stat: ast.If)
-    --     local conditional = stat.condition
-    --     local relative = position_relative(get_span(from))
+    function process_if(stat: ast.If)
+        local conditional = stat.condition
+        local relative = position_relative(get_span(conditional))
         
-    --     if relative == "within" then
-    --         return parse_expression(conditional.value)
-    --     end
+        if relative == "within" then
+            return process_expression_or_command(conditional.value)
+        end
 
-    -- end
+        if stat.block then
+            return process_block(stat.block.value)
+        end
+    end
 
-    -- function parse_if_stat(stat: ast.Stat_If)
-    --     for _, condition in stat.ifs do
-    --         local pos = position_relative(condition.span)
-    --         if pos == "before" then continue end
-    --         if pos == "after" then break end
-            
-    --     end
-    -- end
+    function parse_if_stat(stat: ast.Stat_If)
+        for _, condition in stat.ifs do
+            local pos = position_relative(condition.span)
+            if pos == "before" then continue end
+            if pos == "after" then break end
+            return process_if(condition)
+        end
+        
+        local fallback = stat.fallback
+        if fallback and position_relative(get_span(fallback)) == "within" then
+            return process_block(fallback.value)
+        end
+    end
+
+    function process_function(expr: ast.FunctionBody)
+        if not expr.block then return no_suggestions("") end
+        if position_relative(get_span(expr.block)) == "within" then
+            return process_block(expr.block.value)
+        else
+            return no_suggestions("")
+        end
+    end
+
+    function process_expression(expr: ast.Expression)
+        local expr = expr
+        if expr.kind == "lambda" then
+            return process_function(expr.body)
+        elseif expr.kind == "evaluate" then
+            if position_relative(get_span(expr.body)) == "within" then
+                return process_expression_or_command(expr.body.value)
+            end
+        end
+
+        return no_suggestions("")
+    end
+
+    function process_return(stat: ast.Last_Return)
+        for index, value in stat.values do
+            if position_relative(value.span) == "before" then continue end
+            return process_expression_or_command(value)
+        end
+        return no_suggestions("")
+    end
+
+    function process_expression_or_command(expr: ast.ExpressionOrCommand)
+        if expr.kind == "command" then
+            return process_command(expr, true)
+        else
+            return process_expression(expr)
+        end
+    end
+
+    function process_assignment(assign: ast.Stat_Assign)
+        if not assign.right then return no_suggestions("") end
+        if position_relative(assign.operator.span) == "before" then return no_suggestions("") end
+        return process_expression_or_command(assign.right)
+    end
+
+    function process_while(stat: ast.Stat_While)
+        if position_relative(get_span(stat.expression)) == "within" then
+            return process_expression_or_command(stat.expression.value, true)
+        end
+        
+        local block = stat.block
+        if block and position_relative(get_span(block)) == "within" then
+            return process_block(block.value)
+        end
+
+        return no_suggestions("")
+    end
 
     function process_block(block: ast.Block)
         local statement
@@ -246,17 +400,17 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             if statement == nil then return no_suggestions("") end
 
             return if statement.kind == "if" then
-                no_suggestions("") -- parse_if_stat(statement)
-                elseif statement.kind == "assignment" then
-                no_suggestions("") -- parse_assignment(statement)
+                parse_if_stat(statement)
+                elseif statement.kind == "assign" then
+                process_assignment(statement)
                 elseif statement.kind == "command" then
-                parse_command(statement)
+                process_command(statement)
                 elseif statement.kind == "return" then
-                no_suggestions("") -- parse_return(statement)
+                process_return(statement) -- parse_return(statement)
                 elseif statement.kind == "for" then
                 no_suggestions("") -- parse_for(statement)
                 elseif statement.kind == "while" then
-                no_suggestions("") -- parse_while(statement)
+                process_while(statement)
                 else no_suggestions("")
         end
     

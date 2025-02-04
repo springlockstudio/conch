@@ -860,7 +860,7 @@ local function parse(input: buffer, can_yield: boolean?)
 
         return {
             arguments = { left = left, right = right, value = arguments },
-            block = { left = block_left, right = block_right, value = block, },
+            block = if block_left or block or block_right then { left = block_left, right = block_right, value = block, } else nil,
             
             span = vector.create(
                 left.span.x,
@@ -1280,9 +1280,9 @@ local function parse(input: buffer, can_yield: boolean?)
             if current_is "identifier" and lookahead_is "=" then
                 -- print("assign")
                 local key = expect("identifier")
-                expect("=")
+                local op = expect("=")
                 local value = parse_expression_or_command()
-                local statement = { kind = "assign", left = key, right = value }
+                local statement = { kind = "assign", span = vector.create(key.span.x, value.span.y, 0), operator = op, left = key, right = value }
                 table.insert(statements, statement)
             elseif current_is "if" then
                 table.insert(statements, parse_if())
