@@ -27,7 +27,7 @@ return function()
     end
 
     conch.register_default_commands()
-    conch.register("wait", task.wait)
+    conch.register_quick("wait", task.wait)
     conch.console.output = output
     
     local raw_text = source("")
@@ -51,7 +51,7 @@ return function()
     end)
 
     local analysis = derive(function()
-        local result = conch.analyze(input(), cursor_position())
+        local result = conch.analyze(input(), cursor_position() - 1)
         
         return result
     end)

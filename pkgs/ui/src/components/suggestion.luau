@@ -58,8 +58,8 @@ return function(props: Suggestion)
         flex():column():gap(4):vertical("bottom"),
 
         show(props.analyzing, function()
-            local suggestion = function()
-                return props.analyzing() or { name = "", description = "" }
+            local analyzed = function()
+                return props.analyzing() or { kind = "", name = "", description = "" }
             end
 
             return background {
@@ -78,7 +78,8 @@ return function(props: Suggestion)
     
                     text {
                         text = function()
-                            return suggestion().name
+                            return if analyzed().kind == "variadic" then "..."
+                                else analyzed().name or ""
                         end,
                         text_size = 20,
                         weight = Enum.FontWeight.Bold,
@@ -86,7 +87,7 @@ return function(props: Suggestion)
     
                     text {
                         text = function()
-                            return suggestion().type or ""
+                            return analyzed().type or ""
                         end,
                         text_size = 18,
                         weight = Enum.FontWeight.Light,
@@ -101,37 +102,41 @@ return function(props: Suggestion)
                     text_size = 16,
                     xalignment = Enum.TextXAlignment.Left,
                     text = function()
-                        return suggestion().description
+                        return analyzed().description or ""
                     end,
                 }
 
             }
         end),
 
-        background {
-            ys = 1,
-            width = 200, height = 0,
-            anchor = {0, 1},
-
-            auto = Enum.AutomaticSize.Y,
-
-            { BackgroundTransparency = 0, },
-
-            flex():vertical("bottom"),
-
-            values(props.suggestions, function(suggestion)
-                return text {
-                    width = 200,
-                    height = 20,
-                    
-                    text_size = 16,
-                    xalignment = Enum.TextXAlignment.Left,
-                    text = suggestion.name,
-
-                    padding { left = 4 }
-                }
-            end)
-        }
+        show(function()
+            return props.suggestions()[1] ~= nil
+        end, function()
+            return background {
+                ys = 1,
+                width = 200, height = 0,
+                anchor = {0, 1},
+    
+                auto = Enum.AutomaticSize.Y,
+    
+                { BackgroundTransparency = 0, },
+    
+                flex():vertical("bottom"),
+    
+                values(props.suggestions, function(suggestion)
+                    return text {
+                        width = 200,
+                        height = 20,
+                        
+                        text_size = 16,
+                        xalignment = Enum.TextXAlignment.Left,
+                        text = suggestion.name,
+    
+                        padding { left = 4 }
+                    }
+                end)
+            }
+        end)
     }
 
 end

@@ -459,11 +459,19 @@ export type AnalysisCommandArgument = {
     type: string | false,
     enum: { string } | false
 }
+
+export type AnalysisCommandVariadic = {
+    kind: "variadic",
+    description: string | false,
+    type: string | false,
+    enum: { string } | false
+}
+
 export type AnalysisCommand = {
     kind: "command",
     name: string,
     description: string | false,
-    arguments: { AnalysisCommandArgument },
+    arguments: { AnalysisCommandArgument | AnalysisCommandVariadic },
 }
 
 

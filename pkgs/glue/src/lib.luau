@@ -182,9 +182,8 @@ return {
         end
     end,
 
-    register = function(name: string, fn: (...any) -> (...any), ...: string)
-        console.register_command(name, fn, ...)
-    end,
+    register_quick = console.register_quick,
+    register = console.register_command,
 
     initiate_default_lifecycle = initiate_default_lifecycle,
     has_permissions = user.has_permissions,

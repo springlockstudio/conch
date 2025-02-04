@@ -49,12 +49,27 @@ return function()
 
     -- print("registering commands")
     if IS_CLIENT then
-        console.register_command("print", print)
-        console.register_command("error", error)
-        console.register_command("warn", warn)
-        console.register_command("info", info)
-        console.register_command("vector", vector.create)
-        console.register_command("set", set)
+        console.register_command("print", {
+            permissions = {},
+            description = "Converts the given arguments into a string and sends it to the output",
+            arguments = { { kind = "variadic", type = "any", description = "Arguments to be converted into strings" } },
+            callback = print,
+        })
+        console.register_quick("error", error)
+        console.register_quick("warn", warn)
+        console.register_quick("info", info)
+        console.register_quick("vector", vector.create)
+        console.register_quick("set", set)
+        console.register_command("set", {
+            permissions = {},
+            description = "Attempts to set the given key and value onto the given object",
+            arguments = {
+                { kind = "argument", name = "object", type = "0", description = "The object to be set" },
+                { kind = "argument", name = "key", type = "1", description = "The key to attempt to set on the object" },
+                { kind = "argument", name = "value", type = "2", description = "The value that will be set to" },
+            },
+            callback = set,
+        })
     end
 
 end

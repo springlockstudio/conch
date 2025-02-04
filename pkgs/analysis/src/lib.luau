@@ -81,7 +81,7 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
 
     local function get_text_token<T>(token: ast.Token<T>)
         local span = token.span
-        local finish = span.x - where
+        local finish = where - span.x
         return string.sub(token.text, 1, finish)
     end
 
@@ -89,6 +89,16 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
         return if where >= span.x and where <= span.y then "within"
             elseif where < span.x then "before"
             else "after"
+    end
+    
+    local function no_suggestions(text: string)
+        return {
+            at = where,
+            text = text,
+            logs = LOGS,
+            suggestions = {},
+            ast = processing and processing.value
+        }
     end
 
     local processing = ast(options.code)
@@ -112,19 +122,8 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
     -- local parse_if
     -- local parse_expression
 
-    local function no_suggestions(text: string)
-        return {
-            at = where,
-            text = text,
-            logs = LOGS,
-            suggestions = {},
-            ast = processing.value
-        }
-    end
-
     function parse_command(stat: ast.Command): AnalysisInformation
         local pos = position_relative(stat.prefix.span)
-        print(pos)
         if pos == "within" then
             local var = stat.prefix
             local prefix = var.prefix
@@ -132,18 +131,22 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             if prefix.kind == "global" then
                 local suggestions: { AnalysisSuggestion } = {}
                 local text = get_text_token(prefix.token)
+                local analyzing
                 
                 for index, command in options.commands do
                     if string.sub(command.name, 1, #text) ~= text then continue end
-                    suggestions[index] = {
+                    if #text == #command.name then analyzing = command end
+
+                    table.insert(suggestions, {
                         name = command.name,
                         description = command.description,
                         type = "Command",
 
                         replace = var.span,
                         with = command.name,
-                    }
+                    })
                 end
+                
 
                 return {
                     at = where,
@@ -151,7 +154,7 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
                     logs = LOGS,
                     ast = processing.value,
 
-                    analyzing = nil,
+                    analyzing = analyzing,
                     suggestions = suggestions
                 }
             else
@@ -174,13 +177,28 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
             if not command_info then return no_suggestions("") end
 
             local index = 1
-            for i in stat.arguments do
-                index = i
+            for i, argument in stat.arguments do
                 if position_relative(argument.span) == "within" then break end
+                if position_relative(argument.span) == "after" then index += 1 end
             end
             local arg_info = command_info.arguments[index]
 
-            if not arg_info then
+            if index > #command_info.arguments then
+                
+                local last = command_info.arguments[#command_info.arguments]
+
+                if last.kind == "variadic" then
+                    return {
+                        at = where,
+                        text = text,
+                        logs = LOGS,
+                        ast = processing.value,
+
+                        analyzing = last,
+                        suggestions = {},
+                    }
+                end
+
                 LOG("warn", `no argument #{index}`)
                 return no_suggestions("")
             end
@@ -223,23 +241,26 @@ local function generate_analysis_info(options: FeedAnalysisOptions): AnalysisInf
         for _, stat in block.body do
             statement = stat
             local pos = position_relative(stat.span)
-            if pos == "before" then continue end
-            break
+            if pos == "before" or pos == "after" then continue end
+            
+            if statement == nil then return no_suggestions("") end
+
+            return if statement.kind == "if" then
+                no_suggestions("") -- parse_if_stat(statement)
+                elseif statement.kind == "assignment" then
+                no_suggestions("") -- parse_assignment(statement)
+                elseif statement.kind == "command" then
+                parse_command(statement)
+                elseif statement.kind == "return" then
+                no_suggestions("") -- parse_return(statement)
+                elseif statement.kind == "for" then
+                no_suggestions("") -- parse_for(statement)
+                elseif statement.kind == "while" then
+                no_suggestions("") -- parse_while(statement)
+                else no_suggestions("")
         end
     
-        return if statement.kind == "if" then
-            no_suggestions("") -- parse_if_stat(statement)
-            elseif statement.kind == "assignment" then
-            no_suggestions("") -- parse_assignment(statement)
-            elseif statement.kind == "command" then
-            parse_command(statement)
-            elseif statement.kind == "return" then
-            no_suggestions("") -- parse_return(statement)
-            elseif statement.kind == "for" then
-            no_suggestions("") -- parse_for(statement)
-            elseif statement.kind == "while" then
-            no_suggestions("") -- parse_while(statement)
-            else no_suggestions("")
+        return no_suggestions("")
     end
 
     return process_block(block)

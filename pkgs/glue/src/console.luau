@@ -57,13 +57,24 @@ local function execute(ast: ast.Result)
     busy = false
 end
 
-local function register_command(name: string, fn: (...any) -> (...any), ...: string)
+local function register_command(name: string, info: {
+    permissions: { types.Permission },
+    description: string?,
+    arguments: { ctypes.AnalysisCommandArgument | ctypes.AnalysisCommandVariadic }?,
+    callback: (...any) -> (...any)
+})
     local representation: types.CommandRepresentation = {
         name = name or debug.info(fn, "n"),
         from_server = IS_SERVER,
-        permissions = { ... },
+        permissions = info.permissions,
+        type_info = {
+            kind = "command",
+            name = name,
+            description = info.description or false,
+            arguments = info.arguments or { { kind = "variadic", type = "any", enum = false, description = false } }
+        },
 
-        callback = fn,
+        callback = info.callback,
         dirty_replicate = true
     }
 
@@ -80,18 +91,21 @@ local function register_command(name: string, fn: (...any) -> (...any), ...: str
     return representation
 end
 
+local function register(name: string, fn: (...any) -> (...any), ...: string)
+    register_command(name, {
+        name = name,
+        callback = fn,
+        permissions = { ... }
+    })
+end
+
 local function analyze(src: string, where: number): ctypes.AnalysisInformation
     local combined_variables = {}
     local analyze_commands = {}
 
     local index = 1
     for name, command in commands do
-        analyze_commands[index] = {
-            kind = "command",
-            name = command.name,
-            description = false,
-            arguments = {}
-        }
+        analyze_commands[index] = command.type_info
 
         index += 1
     end
@@ -117,6 +131,7 @@ end
 
 return {
     console = console,
+    register_quick = register,
     register_command = register_command,
     replicate_to_player = replicate_to_player,
     execute = execute,

@@ -35,6 +35,7 @@ export type CommandRepresentation = {
     read from_server: boolean,
     read permissions: { string },
     read callback: (...any) -> (...any),
+    read type_info: types.AnalysisCommand,
 
     dirty_replicate: boolean
 }
