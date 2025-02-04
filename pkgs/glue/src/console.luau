@@ -82,6 +82,19 @@ end
 
 local function analyze(src: string, where: number): ctypes.AnalysisInformation
     local combined_variables = {}
+    local analyze_commands = {}
+
+    local index = 1
+    for name, command in commands do
+        analyze_commands[index] = {
+            kind = "command",
+            name = command.name,
+            description = false,
+            arguments = {}
+        }
+
+        index += 1
+    end
 
     for global, value in vm.globals do
         combined_variables[global] = value
@@ -91,12 +104,14 @@ local function analyze(src: string, where: number): ctypes.AnalysisInformation
         combined_variables[key] = vm.locals[index]
     end
 
+    
+
     return intel.generate_analysis_info({
         code = src,
         where = where,
 
         variables = combined_variables,
-        commands = {}
+        commands = analyze_commands
     })
 end
 

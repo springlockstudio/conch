@@ -258,7 +258,7 @@ export type If = {
     read elsekeyword: Token<"else">?,
     read keyword: Token<"if">,
     read condition: Surrounded<ExpressionOrCommand, "("?, ")"?>,
-    read block: Surrounded<Block, "{", "}"?>?,
+    read block: Surrounded<Block, "{"?, "}"?>,
     read span: Span,
 }
 
@@ -1328,11 +1328,6 @@ export type Result = {
     status: "finished",
     src: string,
     value: Block
-} | {
-    status: "pending",
-    src: string,
-    append: (new: string) -> Result,
-    set: (new: string) -> Result,
 } | {
     status: "error",
     src: string,

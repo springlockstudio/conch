@@ -141,6 +141,34 @@ return function()
             }
         end),
 
+        values(function()
+            return analysis() and analysis().logs or {}
+        end, function(log, layout)
+            return background {
+                height = 24,
+                auto = Enum.AutomaticSize.Y,
+                layout = function() return -layout() - 1 end,
+                color = theme.background():Lerp(
+                    if log.kind == "normal" then theme.text()
+                    elseif log.kind == "info" then theme.text_info()
+                    elseif log.kind == "warn" then theme.text_warn()
+                    elseif log.kind == "error" then theme.text_error()
+                    else theme.text(),
+                    0.1
+                ),
+    
+                flex():fill():vertical("center"):horizontal("left"),
+                padding { x = 8, y = 3 },
+    
+                text {
+                    text = log.text,
+                    text_size = 18,
+                    text_style = log.kind,
+                    xalignment = Enum.TextXAlignment.Left,
+                }
+            }
+        end),
+
         gap { height = 4 },
 
         values(state.logs, function(log: conch.Log, layout: () -> number)
