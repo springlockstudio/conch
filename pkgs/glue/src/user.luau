@@ -2,12 +2,11 @@
 local RunService = game:GetService("RunService")
 
 local types = require("./types")
-local zap = require("./network/zap")
+local net = require("./net")
 local state = require("./state")
 local constants = require("./constants")
 
 local IS_SERVER = RunService:IsServer()
-local IS_CLIENT = RunService:IsClient()
 
 local function obtain_user_key(player: Player | false, name: string?)
     return if player then `player-{player.UserId}` else `server-{name}`
@@ -29,11 +28,9 @@ local function create_user(
         roles = {}
     }
 
+	print(debug.traceback())
     if IS_SERVER and user.player then
-        zap.create_user.fire(
-            user.player,
-            { id = user.id, name = user.name }
-        )
+		net.server.fire_create_user(user.player, user.id, user.name)
     end
 
     state.users[user.id] = user
@@ -86,10 +83,7 @@ local function give_roles(user: types.UserPublic, ...: types.Role)
 
     if IS_SERVER and self.player then
         self.dirty = true
-        zap.update_user_roles.fire(
-            self.player,
-            { id = self.id, roles = new_roles }
-        )
+		net.server.fire_update_user_roles(self.player, { id = self.id, roles = new_roles })
     end
 
 end
@@ -110,10 +104,7 @@ local function remove_roles(user: types.UserPublic, ...: types.Role)
     
     if RunService:IsServer() and self.player then
         self.dirty = true
-        zap.update_user_roles.fire(
-            self.player,
-            { id = self.id, roles = new_roles }
-        )
+        net.server.fire_update_user_roles(self.player, { id = self.id, roles = new_roles })
     end
 end
 

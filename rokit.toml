@@ -5,6 +5,5 @@
 
 [tools]
 pesde = "daimond113/pesde@0.5.3+registry.0.1.2"
-zap = "red-blox/zap@0.6.16"
 rojo = "rojo-rbx/rojo@7.4.4"
 lune = "lune-org/lune@0.8.9"

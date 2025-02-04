@@ -5,14 +5,14 @@ local user = require("./user")
 local state = require("./state")
 local types = require("./types")
 local console = require("./console")
-local zap = require("./network/zap")
+local net = require("./net")
 
 local LOCALPLAYER = Players.LocalPlayer
 
 local invocation_id = 0
 
 local function create_local_user(
-    data: { name: string, id: string }
+    data: net.UserPacket
 )
     -- print('creating new local user')
     local self = user.create_user { name = data.name, player = LOCALPLAYER :: Player | false }
@@ -20,7 +20,7 @@ local function create_local_user(
 end
 
 local function update_user_roles(
-    data: { id: string, roles: { string } }
+    data: net.UpdateUserRolesPacket
 )   
     -- print('updating local user roles')
     local user = state.users[data.id]
@@ -30,14 +30,14 @@ local function update_user_roles(
 end
 
 local function update_role_permissions(
-    data: { role: string, permissions: { string } }
+    data: net.UpdateRolePacket
 )
     -- print('updating user role permissions')
-    state.roles[data.role] = data.permissions
+    state.roles[data.name] = data.permissions
 end
 
 local function register_command(
-    data: { name: string, permissions: { string } }
+    data: net.RegisterCommandPacket
 )
     -- warn("NEW SERVER COMMAND", data.name)
     console.register_command(data.name, function(...)
@@ -45,19 +45,15 @@ local function register_command(
         invocation_id += 1
         state.continuations[invocation_id] = thread
 
-        zap.invoke_server_command.fire {
-            name = data.name,
-            invocation_id = invocation_id,
-            arguments = { ... }
-        }
+		net.client.invoke_command(invocation_id, data.name, { ... })
         
         -- print("waiting for function to finish", data.name)
-        local data = coroutine.yield()
+        local reply = (coroutine.yield()) :: net.InvokeReplyPacket
         -- print("resuming function")
 
-        if data.type == "ok" then
+        if reply.status == "ok" then
             -- print("unpacking with", data.results)
-            return unpack(data.results)
+            return unpack(reply.results)
         else
             error("something went wrong on the server")
         end
@@ -65,13 +61,13 @@ local function register_command(
 end
 
 local function receive_server_results(
-    data: { invocation_id: number, results: types.Result }
+    data: net.InvokeReplyPacket
 )
-    local thread = state.continuations[data.invocation_id]
+    local thread = state.continuations[data.invoke_id]
     if not thread then return end
     -- print('received result for', data)
-    state.continuations[data.invocation_id] = nil
-    coroutine.resume(thread, data.results)
+    state.continuations[data.invoke_id] = nil
+    task.spawn(thread, data)
 end
 
 local function log(
