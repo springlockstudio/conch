@@ -1,15 +1,15 @@
 local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 
-local ast = require "../roblox_packages/ast"
-local compiler = require "../roblox_packages/compiler"
-local ctypes = require "../roblox_packages/types"
-local intel = require "../roblox_packages/intel"
+local ast = require "../luau_packages/ast"
+local compiler = require "../luau_packages/compiler"
+local ctypes = require "../luau_packages/types"
+local intel = require "../luau_packages/intel"
 local net = require "./net"
 local state = require "./state"
 local types = require "./types"
 local user = require "./user"
-local vm = require "../roblox_packages/vm"
+local vm = require "../luau_packages/vm"
 
 local IS_SERVER = RunService:IsServer()
 

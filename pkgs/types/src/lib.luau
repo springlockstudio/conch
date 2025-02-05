@@ -104,7 +104,7 @@ export type Expression_Var = {
 }
 
 export type Expression =
-	| Expression_Nil
+			| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -183,7 +183,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-	| TableField_ExprKey
+			| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -378,7 +378,7 @@ export type Instruction_Return = {
 }
 
 export type Instruction =
-	| Instruction_PushNumber
+			| Instruction_PushNumber
 	| Instruction_PushBoolean
 	| Instruction_PushString
 	| Instruction_PushTable
@@ -432,7 +432,7 @@ export type AnalysisCommandArgument = {
 	name: string,
 	description: string | false,
 	type: string | false,
-	enum: { string } | false,
+	suggestion_generator: false | (text: string) -> AnalysisSuggestion,
 }
 
 export type AnalysisCommandVariadic = {

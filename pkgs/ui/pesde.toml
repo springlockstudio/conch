@@ -19,5 +19,5 @@ sourcemap_generator = ".pesde/sourcemap_generator.luau"
 
 [dependencies]
 vide = { wally = "wally#centau/vide", version = "^0.3.1" }
-ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "roblox" }
+ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "luau" }
 conch_glue = { workspace = "alicesaidhi/conch_glue", version = "^" }

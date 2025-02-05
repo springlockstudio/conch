@@ -1,5 +1,5 @@
 local ast = require "./optional_ast"
-local types = require "../roblox_packages/conch_types"
+local types = require "../roblox_packages/types"
 
 local state: types.VirtualMachine
 
@@ -20,7 +20,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-	| ast.Command
+											| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -289,30 +289,21 @@ local function generate_analysis_info(
 					index += 1
 				end
 			end
-			local arg_info = command_info.arguments[index]
+			local arg_info: types.AnalysisCommandArgument | types.AnalysisCommandVariadic =
+				command_info.arguments[index]
 
 			if index > #command_info.arguments then
-				local last = command_info.arguments[#command_info.arguments]
+				arg_info = command_info.arguments[#command_info.arguments]
 
-				if last.kind == "variadic" then
-					if arg_analyzed then
-						arg_analyzed.analyzing = arg_analyzed.analyzing or last
-						return arg_analyzed
-					end
-
-					return {
-						at = where,
-						text = "",
-						logs = LOGS,
-						ast = processing.value,
-
-						analyzing = last,
-						suggestions = {},
-					}
+				if arg_info.kind ~= "variadic" then
+					LOG("warn", `no argument #{index}`)
+					return arg_analyzed or no_suggestions ""
 				end
+			end
 
-				LOG("warn", `no argument #{index}`)
-				return arg_analyzed or no_suggestions ""
+			local suggestions = {}
+
+			if arg_info then
 			end
 
 			if arg_analyzed then
@@ -322,7 +313,7 @@ local function generate_analysis_info(
 
 			return {
 				at = where,
-				text = text,
+				text = "",
 				logs = LOGS,
 				ast = processing.value,
 

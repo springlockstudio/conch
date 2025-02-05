@@ -3,7 +3,7 @@ version = "0.1.6"
 includes = ["src", "pesde.toml"]
 
 [target]
-environment = "roblox"
+environment = "luau"
 lib = "src/lib.luau"
 build_files = ["src/"]
 
@@ -11,5 +11,4 @@ build_files = ["src/"]
 default = "https://github.com/daimond113/pesde-index"
 
 [dependencies]
-conch_ast = { workspace = "alicesaidhi/conch_ast" }
-conch_types = { workspace = "alicesaidhi/conch_types" }
+types = { workspace = "alicesaidhi/conch_types" }

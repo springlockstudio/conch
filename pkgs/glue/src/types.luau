@@ -1,4 +1,4 @@
-local types = require "../roblox_packages/types"
+local types = require "../luau_packages/types"
 
 export type User = {
 	read id: string,

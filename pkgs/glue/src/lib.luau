@@ -1,7 +1,7 @@
 local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 
-local ast = require "../roblox_packages/ast"
+local ast = require "../luau_packages/ast"
 local bootstrap = require "./bootstrap"
 local client = require "./client"
 local console = require "./console"

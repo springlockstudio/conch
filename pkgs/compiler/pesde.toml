@@ -2,7 +2,7 @@ name = "alicesaidhi/conch_compiler"
 version = "0.1.6"
 
 [target]
-environment = "roblox"
+environment = "luau"
 lib = "src/lib.luau"
 build_files = ["src/"]
 
