@@ -1,3 +1,4 @@
+--!nonstrict
 local types = require "../roblox_packages/types"
 
 type VirtualMachine = types.VirtualMachine
