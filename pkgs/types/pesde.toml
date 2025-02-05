@@ -3,8 +3,8 @@ version = "0.1.0"
 
 [target]
 environment = "roblox"
-lib = "lib.luau"
-build_files = ["lib.luau"]
+lib = "src/lib.luau"
+build_files = ["src/lib.luau"]
 
 [indices]
 default = "https://github.com/daimond113/pesde-index"
