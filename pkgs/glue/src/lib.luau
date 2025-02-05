@@ -7,7 +7,7 @@ local types = require("./types")
 local client = require("./client")
 local bootstrap = require("./bootstrap")
 local console = require("./console")
-local ast = require("../luau_packages/ast")
+local ast = require("../roblox_packages/ast")
 local net = require("./net")
 
 export type Log = types.Log

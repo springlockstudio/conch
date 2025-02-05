@@ -1,9 +1,11 @@
 name = "alicesaidhi/conch_ui"
 version = "0.1.0"
+includes = ["src/", "pesde.toml"]
 
 [target]
 environment = "roblox"
 lib = "src/lib.luau"
+build_files = ["src/"]
 
 [indices]
 default = "https://github.com/daimond113/pesde-index"
@@ -17,5 +19,5 @@ sourcemap_generator = ".pesde/sourcemap_generator.luau"
 
 [dependencies]
 vide = { wally = "wally#centau/vide", version = "^0.3.1" }
-ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "luau" }
+ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "roblox" }
 conch_glue = { workspace = "alicesaidhi/conch_glue", version = "^" }

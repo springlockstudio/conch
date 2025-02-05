@@ -2,8 +2,9 @@ name = "alicesaidhi/conch_types"
 version = "0.1.0"
 
 [target]
-environment = "luau"
+environment = "roblox"
 lib = "lib.luau"
+build_files = ["lib.luau"]
 
 [indices]
 default = "https://github.com/daimond113/pesde-index"

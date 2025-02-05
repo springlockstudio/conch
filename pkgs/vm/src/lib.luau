@@ -1,4 +1,4 @@
-local types = require("../luau_packages/types")
+local types = require("../roblox_packages/types")
 
 type VirtualMachine = types.VirtualMachine
 

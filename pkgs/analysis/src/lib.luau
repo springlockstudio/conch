@@ -1,5 +1,5 @@
 local ast = require("./optional_ast")
-local types = require("../luau_packages/conch_types")
+local types = require("../roblox_packages/conch_types")
 
 local state: types.VirtualMachine
 

@@ -5,9 +5,6 @@
         "$className": "DataModel",
         
         "ReplicatedStorage": {
-            "luau_packages": {
-                "$path": "luau_packages"
-            },
 
             "roblox_packages": {
                 "$path": "roblox_packages"
