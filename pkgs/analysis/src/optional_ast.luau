@@ -106,7 +106,7 @@ export type Expression_Var = {
 }
 
 export type Expression =
-	| Expression_Nil
+		| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -191,7 +191,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-	| TableField_ExprKey
+		| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -327,6 +327,7 @@ local function parse(input: buffer, can_yield: boolean?)
 		return (char "a" <= c and c <= char "z")
 			or (char "A" <= c and c <= char "Z")
 			or c == char "_"
+			or c == char "@"
 	end
 
 	local function string_backslash()

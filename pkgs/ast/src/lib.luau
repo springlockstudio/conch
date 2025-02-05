@@ -52,6 +52,7 @@ local function parse(input: buffer, can_yield: boolean?)
 	local function is_alpha(c: number): boolean
 		return (char "a" <= c and c <= char "z")
 			or (char "A" <= c and c <= char "Z")
+			or c == char "@"
 			or c == char "_"
 	end
 
