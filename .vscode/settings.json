@@ -1,14 +1,21 @@
 {
-    "luau-lsp.fflags.enableNewSolver": true,
-    "files.exclude": {
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "**/.DS_Store": true,
-        "**/Thumbs.db": true,
-        "**/roblox_packages": true,
-        "**/luau_packages": true,
-        "out": true
-    }
+  "luau-lsp.fflags.enableNewSolver": true,
+  "luau-lsp.sourcemap.enabled": false,
+  "editor.detectIndentation": false,
+  "editor.insertSpaces": false,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/roblox_packages": false,
+    "**/luau_packages": false,
+    "out": true
+  },
+  "luau-lsp.require.mode": "relativeToFile",
+  "luau-lsp.require.directoryAliases": {
+    "@lune/": "~/.lune/.typedefs/0.8.9/"
+  }
 }

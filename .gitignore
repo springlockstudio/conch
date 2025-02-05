@@ -4,6 +4,7 @@
 **/pesde.lock
 **/network/server.luau
 **/network/client.luau
+**/dist
 
 /out
 /local

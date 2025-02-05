@@ -1,5 +1,5 @@
 name = "alicesaidhi/conch_ast"
-version = "0.1.0"
+version = "0.1.6"
 
 [target]
 environment = "roblox"
