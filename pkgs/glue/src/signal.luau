@@ -1,38 +1,37 @@
 --!strict
-local types = require("./types")
+local types = require "./types"
 
 local function create_signal<T...>(): types.Signal<T...>
-    local connections: { types.Connection } = {}
-    local signal = {}
+	local connections: { types.Connection } = {}
+	local signal = {}
 
-    function signal:connect(fn: (T...) -> ())
-        local disconnected = false
-        local self = { callback = fn }
+	function signal:connect(fn: (T...) -> ())
+		local disconnected = false
+		local self = { callback = fn }
 
-        local function disconnect()
-            if disconnected then return end
-            
-            disconnected = true
-            self.disconnected = true
+		local function disconnect()
+			if disconnected then return end
 
-            local location = table.find(connections, self)
-            if not location then return end
-            table.remove(connections, location)
-        end
+			disconnected = true
+			self.disconnected = true
 
-        self.disconnect = disconnect
+			local location = table.find(connections, self)
+			if not location then return end
+			table.remove(connections, location)
+		end
 
-        return self
-    end
+		self.disconnect = disconnect
 
-    function signal:fire(...: T...)
-        for _, connection in connections do
-            connection.callback(...)
-        end
-    end
+		return self
+	end
 
-    return signal :: any
+	function signal:fire(...: T...)
+		for _, connection in connections do
+			connection.callback(...)
+		end
+	end
+
+	return signal :: any
 end
-
 
 return create_signal

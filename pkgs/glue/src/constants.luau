@@ -1,4 +1,3 @@
 return {
-    ADMIN_ROLE = "super-user"
-
+	ADMIN_ROLE = "super-user",
 }

@@ -1,71 +1,70 @@
-local types = require("../roblox_packages/types")
+local types = require "../roblox_packages/types"
 
 export type User = {
-    read id: string,
-    read name: string,
-    read player: Player | false,
+	read id: string,
+	read name: string,
+	read player: Player | false,
 
-    disconnected: boolean,
-    dirty: boolean,
-    roles: { string },
+	disconnected: boolean,
+	dirty: boolean,
+	roles: { string },
 }
 
 export type UserPublic = {
-    read id: string,
-    read name: string,
-    read player: Player | false,
+	read id: string,
+	read name: string,
+	read player: Player | false,
 
-    read disconnected: boolean,
-    read roles: { string },
-    read dirty: boolean,
+	read disconnected: boolean,
+	read roles: { string },
+	read dirty: boolean,
 }
 
 export type Log = {
-    read kind: "normal" | "info" | "warn" | "error",
-    read text: string
+	read kind: "normal" | "info" | "warn" | "error",
+	read text: string,
 }
 
 export type CommandContext = {
-    read executor: User,
-    read invocation_id: number | false,
+	read executor: User,
+	read invocation_id: number | false,
 }
 
 export type CommandRepresentation = {
-    read name: string,
-    read from_server: boolean,
-    read permissions: { string },
-    read callback: (...any) -> (...any),
-    read type_info: types.AnalysisCommand,
+	read name: string,
+	read from_server: boolean,
+	read permissions: { string },
+	read callback: (...any) -> ...any,
+	read type_info: types.AnalysisCommand,
 
-    dirty_replicate: boolean
+	dirty_replicate: boolean,
 }
 
 export type Console = {
-    read vm: types.VirtualMachine,
-    read commands: { CommandRepresentation },
-    output: (Log) -> ()
+	read vm: types.VirtualMachine,
+	read commands: { CommandRepresentation },
+	output: (Log) -> (),
 }
 
-
 export type Connection = {
-    read callback: (...any) -> (...any),
-    read disconnect: (any) -> (),
-    disconnected: boolean
+	read callback: (...any) -> ...any,
+	read disconnect: (any) -> (),
+	disconnected: boolean,
 }
 
 export type ConnectionPublic = {
-    read callback: (...any) -> (...any),
-    read disconnect: (any) -> (),
-    read disconnected: boolean
+	read callback: (...any) -> ...any,
+	read disconnect: (any) -> (),
+	read disconnected: boolean,
 }
 
 export type Signal<T...> = {
-    read fire: (any, T...) -> (),
-    read connect: (any, (T...) -> ()) -> Connection,
+	read fire: (any, T...) -> (),
+	read connect: (any, (T...) -> ()) -> Connection,
 }
 
 export type SignalPublic<T...> = {
-    read connect: (any, (T...) -> ()) -> Connection,
+	read connect: (any, (T...) -> ()) -> Connection,
 }
 
 export type Result = { type: "ok", results: unknown } | { type: "err" }

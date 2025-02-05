@@ -1,10 +1,11 @@
-column_width = 100
+syntax = "Luau"
+column_width = 80
 line_endings = "Unix"
 indent_type = "Tabs"
-indent_with = 4
+indent_width = 4
 quote_style = "AutoPreferDouble"
-collapse_simple_statement = "InputOnly"
-call_parentheses = "Input"
+collapse_simple_statement = "Always"
+call_parentheses = "None"
 
 [sort_requires]
 enabled = true

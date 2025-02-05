@@ -1,15 +1,51 @@
-local fs = require("@lune/fs")
-local serde = require("@lune/serde")
-local process = require("@lune/process")
-local testkit = require("../tests/testkit")
+local fs = require "@lune/fs"
+local process = require "@lune/process"
+local serde = require "@lune/serde"
+local testkit = require "../tests/testkit"
 
 type PesdeOverride = { name: string, version: string }
 type PesdePatch = { [string]: string }
-type PesdeDependency =
-	| { name: string, wally: nil, version: string, index: string?, target: string?, repo: nil, rev: nil, path: nil, workspace: nil }
-	| { name: nil, wally: string, version: string, index: string?, target: nil, repo: nil, rev: nil, path: nil, workspace: nil }
-	| { name: nil, wally: nil, version: nil, index: nil, target: nil, repo: string, rev: string, path: string?, workspace: nil }
-	| { name: nil, wally: nil, version: string, index: nil, target: nil, repo: nil, rev: nil, path: nil, workspace: string }
+type PesdeDependency = | {
+	name: string,
+	wally: nil,
+	version: string,
+	index: string?,
+	target: string?,
+	repo: nil,
+	rev: nil,
+	path: nil,
+	workspace: nil,
+} | {
+	name: nil,
+	wally: string,
+	version: string,
+	index: string?,
+	target: nil,
+	repo: nil,
+	rev: nil,
+	path: nil,
+	workspace: nil,
+} | {
+	name: nil,
+	wally: nil,
+	version: nil,
+	index: nil,
+	target: nil,
+	repo: string,
+	rev: string,
+	path: string?,
+	workspace: nil,
+} | {
+	name: nil,
+	wally: nil,
+	version: string,
+	index: nil,
+	target: nil,
+	repo: nil,
+	rev: nil,
+	path: nil,
+	workspace: string,
+}
 
 type PesdeToml = {
 	name: string,
@@ -37,17 +73,17 @@ type PesdeToml = {
 	scripts: {
 		roblox_sync_config_generator: string?,
 		sourcemap_generator: string?,
-		[string]: string
+		[string]: string,
 	}?,
 
 	indices: {
 		default: string,
-		[string]: string
+		[string]: string,
 	}?,
 
 	wally_indices: {
 		default: string,
-		[string]: string
+		[string]: string,
 	}?,
 
 	overrides: { [string]: PesdeOverride }?,
@@ -55,13 +91,12 @@ type PesdeToml = {
 
 	place: {
 		shared: string,
-		server: string
+		server: string,
 	}?,
 
 	dependencies: { [string]: PesdeDependency }?,
 	peer_dependencies: { [string]: PesdeDependency }?,
 	dev_dependencies: { [string]: PesdeDependency }?,
-
 }
 
 --[[
@@ -89,9 +124,7 @@ lib/
 	init.luau
 
 ]]
-local function fix(name: string)
-	return string.gsub(name, "_", "-")
-end
+local function fix(name: string) return string.gsub(name, "_", "-") end
 
 local function generate_wally_release_files(path: string)
 	local file = fs.readFile(path .. "/pesde.toml")
@@ -100,61 +133,75 @@ local function generate_wally_release_files(path: string)
 
 	local lib_file_path = pesde_toml.target.lib
 
-	assert(lib_file_path, "no lib file, cannot make wally release")	
+	assert(lib_file_path, "no lib file, cannot make wally release")
 
 	local lib_file = fs.readFile(path .. "/" .. lib_file_path)
 
-	local lib_file_src: string do
+	local lib_file_src: string
+	do
 		local lib_file_path_without = string.gsub(lib_file_path, ".luau", "")
 		local init_file = {
-			`local main = require("./{lib_file_path_without}")`
+			`local main = require("./{lib_file_path_without}")`,
 		}
 
 		for value in string.gmatch(lib_file, "export type (.-) =") do
 			local export_without_default = string.gsub(value, "=.->", ">")
-			table.insert(init_file, `export type {value} = main.{export_without_default}`)
+			table.insert(
+				init_file,
+				`export type {value} = main.{export_without_default}`
+			)
 		end
 
 		table.insert(init_file, "return main")
 		lib_file_src = table.concat(init_file, "\n")
 	end
 
-	local init_file_src: string do
+	local init_file_src: string
+	do
 		local init_file = {
-			`local main = require(script.lib)`
+			`local main = require(script.lib)`,
 		}
 
 		for value in string.gmatch(lib_file, "export type (.-) =") do
 			local export_without_default = string.gsub(value, "=.->", ">")
-			table.insert(init_file, `export type {value} = main.{export_without_default}`)
+			table.insert(
+				init_file,
+				`export type {value} = main.{export_without_default}`
+			)
 		end
 
 		table.insert(init_file, "return main")
 		init_file_src = table.concat(init_file, "\n")
 	end
 
-	local roblox_packages: { [string]: string } = {} do
+	local roblox_packages: { [string]: string } = {}
+	do
 		local dependencies = pesde_toml.dependencies
 		if dependencies then
-
 			for name, dependency in dependencies do
-				local file = fs.readFile(path .. "/roblox_packages/" .. name .. ".luau")
+				local file =
+					fs.readFile(path .. "/roblox_packages/" .. name .. ".luau")
 				local package_file = {
-					`local main = require(script.Parent.Parent.Parent["{name}"])`
+					`local main = require(script.Parent.Parent.Parent["{name}"])`,
 				}
 
 				for value in string.gmatch(file, "export type (.-) =") do
-					local export_without_default = string.gsub(value, "=.->", ">")
-					table.insert(package_file, `export type {value} = main.{export_without_default}`)
+					local export_without_default =
+						string.gsub(value, "=.->", ">")
+					table.insert(
+						package_file,
+						`export type {value} = main.{export_without_default}`
+					)
 				end
-				
+
 				table.insert(package_file, "return main")
 				roblox_packages[name] = table.concat(package_file, "\n")
 			end
 		end
 	end
 
-	local wally_toml = {} do
+	local wally_toml = {}
+	do
 		wally_toml.package = {
 			name = string.gsub(pesde_toml.name, "_", "-"),
 			description = pesde_toml.description,
@@ -165,20 +212,22 @@ local function generate_wally_release_files(path: string)
 			realm = "shared",
 			repository = pesde_toml.repository,
 			include = { "/dist" },
-			exclude = { "pesde.toml", "pesde.lock", "src", "roblox_packages" }
+			exclude = { "pesde.toml", "pesde.lock", "src", "roblox_packages" },
 		}
 
 		local dependencies = {}
 		if pesde_toml.dependencies then
 			for name, dependency in pesde_toml.dependencies do
 				if dependency.wally then
-					dependencies[name] = `{string.sub(dependency.wally, 7)}@{dependency.version}`
+					dependencies[name] =
+						`{string.sub(dependency.wally, 7)}@{dependency.version}`
 				elseif dependency.name then
-					error("pesde dependency detected")
+					error "pesde dependency detected"
 				elseif dependency.workspace then
-					dependencies[name] = `{fix(dependency.workspace)}@{pesde_toml.version}`
+					dependencies[name] =
+						`{fix(dependency.workspace)}@{pesde_toml.version}`
 				elseif dependency.repo then
-					error("git dependency detected")
+					error "git dependency detected"
 				end
 			end
 		end
@@ -194,7 +243,10 @@ local function generate_wally_release_files(path: string)
 	fs.writeDir(path .. "/dist/roblox_packages")
 
 	for name, package in roblox_packages do
-		fs.writeFile(path .. "/dist/roblox_packages/" .. name .. ".luau", package)
+		fs.writeFile(
+			path .. "/dist/roblox_packages/" .. name .. ".luau",
+			package
+		)
 	end
 
 	fs.copy(path .. "/src", path .. "/dist/src", true)
@@ -202,29 +254,42 @@ local function generate_wally_release_files(path: string)
 	fs.writeFile(path .. "/dist/init.luau", init_file_src)
 
 	local package_name = string.split(pesde_toml.name, "/")[2]
-	fs.writeFile(path .. "/default.project.json", `\{\n\t"name": "{fix(package_name)}",\n\t"tree": \{\n\t\t"$path": "dist"\n\t}\n}`)
+	fs.writeFile(
+		path .. "/default.project.json",
+		`\{\n\t"name": "{fix(package_name)}",\n\t"tree": \{\n\t\t"$path": "dist"\n\t}\n}`
+	)
 
 	fs.writeFile(path .. "/wally.toml", serde.encode("toml", wally_toml, true))
 end
 
-type SortItem = { name: string, path: string, dependencies: { [string]: PesdeDependency }? }
+type SortItem = {
+	name: string,
+	path: string,
+	dependencies: { [string]: PesdeDependency }?,
+}
 
 local function get_order()
-	local packages = fs.readDir("./pkgs")
+	local packages = fs.readDir "./pkgs"
 	local package_dependencies: { SortItem } = {}
 	local mapped: { [string]: PesdeToml } = {}
-	
+
 	for index, package in packages do
 		local path = "./pkgs/" .. package
 		local file = fs.readFile(path .. "/pesde.toml")
 		local pesde_toml: PesdeToml = serde.decode("toml", file)
 
 		mapped[pesde_toml.name] = pesde_toml
-		package_dependencies[index] = { name = pesde_toml.name, path = path, dependencies = pesde_toml.dependencies }
+		package_dependencies[index] = {
+			name = pesde_toml.name,
+			path = path,
+			dependencies = pesde_toml.dependencies,
+		}
 	end
 
 	-- check if a relies on b
-	local function flatten_dependencies(dependencies: { [string]: PesdeDependency })
+	local function flatten_dependencies(
+		dependencies: { [string]: PesdeDependency }
+	)
 		local flat = {}
 
 		for name, dependency in dependencies do
@@ -251,7 +316,9 @@ local function get_order()
 	end
 
 	table.sort(package_dependencies, function(a: SortItem, b: SortItem)
-		if a.dependencies == nil and b.dependencies == nil then return a.name > b.name end
+		if a.dependencies == nil and b.dependencies == nil then
+			return a.name > b.name
+		end
 		if a.dependencies == nil then return true end
 		if b.dependencies == nil then return false end
 
@@ -279,15 +346,12 @@ end
 for _, path in get_order() do
 	print("Generating release for", path)
 	generate_wally_release_files(path)
-	local status = process.spawn("wally", {"publish"}, {
+	local status = process.spawn("wally", { "publish" }, {
 		cwd = path,
 		env = {},
 		shell = true,
 	})
 
 	cleanup_files(path)
-	if status.ok == false then error(status.stderr) end 
+	if status.ok == false then error(status.stderr) end
 end
-
-
-

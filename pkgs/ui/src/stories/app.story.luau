@@ -1,14 +1,12 @@
-local vide = require("../../roblox_packages/vide")
-local conch = require("../../roblox_packages/conch_glue")
+local conch = require "../../roblox_packages/conch_glue"
+local vide = require "../../roblox_packages/vide"
 
-local state = require("../state")
-local app = require("../app")
+local app = require "../app"
+local state = require "../state"
 
 return function(target)
-    state.opened(true)
-    conch.register_default_commands()
-    conch._.create_local_user()
-    return vide.mount(function()
-        return app()
-    end, target)
+	state.opened(true)
+	conch.register_default_commands()
+	conch._.create_local_user()
+	return vide.mount(function() return app() end, target)
 end
