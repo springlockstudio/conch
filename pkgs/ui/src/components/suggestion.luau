@@ -65,6 +65,7 @@ return function(props: Suggestion)
 
 			return background {
 				width = 300,
+				layout = 10,
 				auto = Enum.AutomaticSize.Y,
 
 				{ BackgroundTransparency = 0 },

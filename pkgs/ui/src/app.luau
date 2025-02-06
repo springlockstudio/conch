@@ -19,6 +19,32 @@ local derive = vide.derive
 local show = vide.show
 local changed = vide.changed
 
+local LICENSE = [[MIT License
+
+Copyright (c) 2025 alicesays_hallo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.]]
+
+local STARTUP_TEXT = [[
+Conch	indev release.
+This work is made available under the MIT license. You can view the license by running `license`.]]
+
 return function()
 	local function output(log)
 		local logs = state.logs()
@@ -28,6 +54,28 @@ return function()
 	end
 
 	conch.console.output = output
+
+	for _, s in string.split(STARTUP_TEXT, "\n") do
+		output { kind = "normal", text = s }
+	end
+
+	conch.register("license", {
+		description = "Outputs the license to the console.",
+		permissions = {},
+		arguments = function() end,
+		callback = function()
+			for _, s in string.split(LICENSE, "\n") do
+				output { kind = "normal", text = s }
+			end
+		end,
+	})
+
+	conch.register("clear", {
+		description = "Clears the console.",
+		permissions = {},
+		arguments = function() end,
+		callback = function() state.logs {} end,
+	})
 
 	local raw_text = source ""
 	local working = source(false)
@@ -46,7 +94,7 @@ return function()
 
 	local syntax_error = derive(function()
 		local status = conch.parse(input())
-		return if status.status == "error" then status.why else false
+		return if status.status == "error" then status.why else nil
 	end)
 
 	local analysis = derive(function()
@@ -148,35 +196,37 @@ return function()
 			}
 		end),
 
-		values(
-			function() return analysis() and analysis().logs or {} end,
-			function(log, layout)
-				return background {
-					height = 24,
-					auto = Enum.AutomaticSize.Y,
-					layout = function() return -layout() - 1 end,
-					color = theme.background():Lerp(
-						if log.kind == "normal"
-							then theme.text()
-							elseif log.kind == "info" then theme.text_info()
-							elseif log.kind == "warn" then theme.text_warn()
-							elseif log.kind == "error" then theme.text_error()
-							else theme.text(),
-						0.1
-					),
+		values(function()
+			local err = syntax_error()
+			local result = table.clone(analysis() and analysis().logs or {})
+			if err then table.insert(result, { kind = "error", text = err }) end
+			return result
+		end, function(log, layout)
+			return background {
+				height = 24,
+				auto = Enum.AutomaticSize.Y,
+				layout = function() return -layout() - 1 end,
+				color = theme.background():Lerp(
+					if log.kind == "normal"
+						then theme.text()
+						elseif log.kind == "info" then theme.text_info()
+						elseif log.kind == "warn" then theme.text_warn()
+						elseif log.kind == "error" then theme.text_error()
+						else theme.text(),
+					0.1
+				),
 
-					flex():fill():vertical("center"):horizontal "left",
-					padding { x = 8, y = 3 },
+				flex():fill():vertical("center"):horizontal "left",
+				padding { x = 8, y = 3 },
 
-					text {
-						text = log.text,
-						text_size = 18,
-						text_style = log.kind,
-						xalignment = Enum.TextXAlignment.Left,
-					},
-				}
-			end
-		),
+				text {
+					text = log.text,
+					text_size = 18,
+					text_style = log.kind,
+					xalignment = Enum.TextXAlignment.Left,
+				},
+			}
+		end),
 
 		gap { height = 4 },
 
