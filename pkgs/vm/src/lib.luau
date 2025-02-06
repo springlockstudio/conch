@@ -53,7 +53,7 @@ local function create_vm()
 		ok: boolean,
 		...: any
 	)
-		if not ok then error(`attempt to call a {kind} value`, 0) end
+		if not ok then error(`{table.concat({ ... }, " ")}`, 0) end
 
 		for i = 1, math.min(max, select("#", ...)) do
 			PUSH(select(i, ...))

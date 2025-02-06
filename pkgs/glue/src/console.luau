@@ -3,18 +3,18 @@ local RunService = game:GetService "RunService"
 
 local ast = require "../luau_packages/ast"
 local compiler = require "../luau_packages/compiler"
+local create_vm = require "../luau_packages/vm"
 local ctypes = require "../luau_packages/types"
 local intel = require "../luau_packages/intel"
 local net = require "./net"
 local state = require "./state"
 local types = require "./types"
 local user = require "./user"
-local vm = require "../luau_packages/vm"
 
 local IS_SERVER = RunService:IsServer()
 
 local vm_state = { locals = {}, upvalues = {}, instructions = {} }
-local vm = vm()
+local vm = create_vm() :: ctypes.VirtualMachine
 local commands: { [string]: types.CommandRepresentation } = {}
 
 local console: types.Console = {
@@ -48,9 +48,12 @@ end
 
 local busy = false
 
-local function execute(ast: ast.Result)
+local function execute(text: string)
+	local ast = ast(text, false)
+
 	assert(ast.status ~= "pending", "unfinished block")
 	assert(not busy, "already executing!")
+
 	console.output { kind = "info", text = `> {ast.src}` }
 	if ast.status == "error" then
 		return console.output { kind = "error", text = ast.why }
@@ -74,34 +77,41 @@ local function execute(ast: ast.Result)
 	busy = false
 end
 
-local function register_command(
+local function register_command<T...>(
 	name: string,
 	info: {
 		permissions: { types.Permission },
 		description: string?,
-		arguments: {
-			ctypes.AnalysisCommandArgument
-			| ctypes.AnalysisCommandVariadic
-		}?,
-		callback: (...any) -> ...any,
+		arguments: () -> T...,
+		callback: (T...) -> ...any,
 	}
 )
+	local arguments: {
+		{
+			variadic: true?,
+			convert: (...any) -> any,
+			analysis: ctypes.AnalysisCommandArgument,
+		}
+	} =
+		{ info.arguments() } :: { any }
+
+	local analysis_arguments =
+		{
+			{ kind = "variadic" } :: ctypes.AnalysisCommandVariadic,
+		} :: { ctypes.AnalysisCommandArgument | ctypes.AnalysisCommandVariadic }
+
+	for index, argument in arguments do
+		analysis_arguments[index] = argument.analysis
+	end
+
 	local representation: types.CommandRepresentation = {
-		name = name or debug.info(fn, "n"),
-		from_server = IS_SERVER,
-		permissions = info.permissions or {},
+		name = name,
+		permissions = info.permissions,
 		type_info = {
 			kind = "command",
 			name = name,
-			description = info.description or false,
-			arguments = info.arguments or {
-				{
-					kind = "variadic",
-					type = "any",
-					enum = false,
-					description = false,
-				},
-			},
+			description = info.description,
+			arguments = analysis_arguments,
 		},
 
 		callback = info.callback,
@@ -109,7 +119,26 @@ local function register_command(
 	}
 
 	commands[name] = representation
-	vm.commands[name] = representation.callback
+	vm.commands[name] = function(...)
+		local custom = { ... }
+
+		local function move(from: number, ...)
+			for i = 0, select("#", ...) - 1 do
+				custom[i + from] = select(i + 1, ...)
+			end
+		end
+
+		for idx, argument in arguments do
+			if argument.variadic then
+				move(idx, argument.convert(select(idx, ...)))
+				break
+			else
+				custom[idx] = argument.convert((select(idx, ...)))
+			end
+		end
+
+		return info.callback(unpack(custom))
+	end
 
 	if IS_SERVER then
 		for _, player in Players:GetPlayers() do
@@ -125,6 +154,7 @@ local function register(name: string, fn: (...any) -> ...any, ...: string)
 	register_command(name, {
 		name = name,
 		callback = fn,
+		arguments = function() end :: any,
 		permissions = { ... },
 	})
 end

@@ -4,10 +4,10 @@ Bootstraps some basic functions onto the command line.
 
 local RunService = game:GetService "RunService"
 
+local arg = require "./arguments"
 local console = require "./console"
 local types = require "./types"
 
-local IS_SERVER = RunService:IsServer()
 local IS_CLIENT = RunService:IsClient()
 
 return function()
@@ -49,13 +49,10 @@ return function()
 		console.register_command("print", {
 			permissions = {},
 			description = "Converts the given arguments into a string and sends it to the output",
-			arguments = {
-				{
-					kind = "variadic",
-					type = "any",
-					description = "Arguments to be converted into strings",
-				},
-			},
+			arguments = function()
+				--
+				return arg.variadic(arg.any("any", "arguments"))
+			end,
 			callback = print,
 		})
 		console.register_quick("error", error)
@@ -66,26 +63,11 @@ return function()
 		console.register_command("set", {
 			permissions = {},
 			description = "Attempts to set the given key and value onto the given object",
-			arguments = {
-				{
-					kind = "argument",
-					name = "object",
-					type = "0",
-					description = "The object to be set",
-				},
-				{
-					kind = "argument",
-					name = "key",
-					type = "1",
-					description = "The key to attempt to set on the object",
-				},
-				{
-					kind = "argument",
-					name = "value",
-					type = "2",
-					description = "The value that will be set to",
-				},
-			},
+			arguments = function()
+				return arg.any("object", "the object to set"),
+					arg.any("key", "key of the object"),
+					arg.any("value", "the value to set it to")
+			end,
 			callback = set,
 		})
 	end

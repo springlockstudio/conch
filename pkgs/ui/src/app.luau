@@ -112,7 +112,7 @@ return function()
 								local tree = pending()
 								working(true)
 								pending(nil)
-								conch.execute(tree)
+								conch.execute(value)
 								working(false)
 							end
 						end,

@@ -1,7 +1,5 @@
 local ast = require "./optional_ast"
-local types = require "../roblox_packages/types"
-
-local state: types.VirtualMachine
+local types = require "../luau_packages/types"
 
 type LogKind = types.LogKind
 type AnalysisSuggestion = types.AnalysisSuggestion
@@ -20,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-											| ast.Command
+																														| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -282,11 +280,13 @@ local function generate_analysis_info(
 			local arg_analyzed: AnalysisInformation = no_suggestions ""
 			for i, argument in stat.arguments do
 				if position_relative(argument.span) == "within" then
-					arg_analyzed = process_expression(argument) :: any
+					arg_analyzed =
+						process_expression(argument) :: AnalysisInformation
 					break
 				end
 				if position_relative(argument.span) == "after" then
 					index += 1
+					break
 				end
 			end
 			local arg_info: types.AnalysisCommandArgument | types.AnalysisCommandVariadic =
@@ -297,29 +297,36 @@ local function generate_analysis_info(
 
 				if arg_info.kind ~= "variadic" then
 					LOG("warn", `no argument #{index}`)
-					return arg_analyzed or no_suggestions ""
+					return arg_analyzed
 				end
 			end
 
-			local suggestions = {}
+			if arg_info.suggestion_generator then
+				local generator = arg_info.suggestion_generator
+				local text = arg_analyzed.text
+				local suggestions = generator(text)
 
-			if arg_info then
+				for idx, name in suggestions do
+					suggestions[idx] = {
+						name = name,
+						type = text,
+
+						replace = vector.create(0, 0, 0),
+						with = name,
+					}
+				end
+
+				table.move(
+					suggestions,
+					1,
+					#suggestions,
+					#arg_analyzed.suggestions + 1,
+					arg_analyzed.suggestions
+				)
 			end
 
-			if arg_analyzed then
-				arg_analyzed.analyzing = arg_analyzed.analyzing or arg_info
-				return arg_analyzed
-			end
-
-			return {
-				at = where,
-				text = "",
-				logs = LOGS,
-				ast = processing.value,
-
-				analyzing = arg_info,
-				suggestions = {},
-			}
+			arg_analyzed.analyzing = arg_analyzed.analyzing or arg_info
+			return arg_analyzed
 		end
 
 		return no_suggestions ""
@@ -367,6 +374,8 @@ local function generate_analysis_info(
 			if position_relative(get_span(expr.body)) == "within" then
 				return process_expression_or_command(expr.body.value)
 			end
+		elseif expr.kind == "identifier" then
+			return no_suggestions(expr.token.text)
 		end
 
 		return no_suggestions ""

@@ -32,7 +32,6 @@ export type CommandContext = {
 
 export type CommandRepresentation = {
 	read name: string,
-	read from_server: boolean,
 	read permissions: { string },
 	read callback: (...any) -> ...any,
 	read type_info: types.AnalysisCommand,

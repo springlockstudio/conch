@@ -104,7 +104,7 @@ export type Expression_Var = {
 }
 
 export type Expression =
-			| Expression_Nil
+									| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -183,7 +183,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-			| TableField_ExprKey
+									| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -378,7 +378,7 @@ export type Instruction_Return = {
 }
 
 export type Instruction =
-			| Instruction_PushNumber
+									| Instruction_PushNumber
 	| Instruction_PushBoolean
 	| Instruction_PushString
 	| Instruction_PushTable
@@ -412,7 +412,7 @@ export type VirtualMachine = {
 export type LogKind = "normal" | "warn" | "error" | "info"
 export type AnalysisSuggestion = {
 	name: string,
-	description: string | false,
+	description: string?,
 	type: string,
 
 	replace: vector,
@@ -423,29 +423,31 @@ export type AnalysisInformation = {
 	text: string,
 	logs: { { kind: LogKind, text: string } },
 
-	analyzing: (AnalysisCommand | AnalysisCommandArgument)?,
+	analyzing: (
+		AnalysisCommand | AnalysisCommandArgument | AnalysisCommandVariadic
+	)?,
 	suggestions: { AnalysisSuggestion },
 }
 
 export type AnalysisCommandArgument = {
 	kind: "argument",
 	name: string,
-	description: string | false,
-	type: string | false,
-	suggestion_generator: false | (text: string) -> AnalysisSuggestion,
+	description: string?,
+	type: string?,
+	suggestion_generator: ((text: string) -> { AnalysisSuggestion })?,
 }
 
 export type AnalysisCommandVariadic = {
 	kind: "variadic",
-	description: string | false,
-	type: string | false,
-	enum: { string } | false,
+	description: string?,
+	type: string?,
+	suggestion_generator: ((text: string) -> { AnalysisSuggestion })?,
 }
 
 export type AnalysisCommand = {
 	kind: "command",
 	name: string,
-	description: string | false,
+	description: string?,
 	arguments: { AnalysisCommandArgument | AnalysisCommandVariadic },
 }
 

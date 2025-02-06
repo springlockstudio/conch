@@ -343,7 +343,6 @@ local function parse(input: buffer, can_yield: boolean?)
 
 	local function yield()
 		if can_yield then
-			print "yielding"
 			local b = coroutine.yield()
 			assert(typeof(b) == "buffer")
 			input = b

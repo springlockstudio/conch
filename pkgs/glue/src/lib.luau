@@ -1,10 +1,12 @@
 local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 
+local arguments = require "./arguments"
 local ast = require "../luau_packages/ast"
 local bootstrap = require "./bootstrap"
 local client = require "./client"
 local console = require "./console"
+local context = require "./context"
 local net = require "./net"
 local state = require "./state"
 local types = require "./types"
@@ -19,6 +21,8 @@ local IS_CLIENT = RunService:IsClient()
 local create_user = user.create_user
 local disconnect_user = user.disconnect_user
 local has_permissions = user.has_permissions
+local create_command_context = context.create_command_context
+local get_command_context = context.get_command_context
 
 local function FOREACH<K, V>(t: { [K]: V }, fn: (value: V, key: K) -> ())
 	for key, value in t do
@@ -30,26 +34,6 @@ local function set_role(role: types.Role, ...: types.Permission)
 	state.roles[role] = { ... }
 
 	if IS_SERVER then net.server.fire_update_role_perms(role, { ... }) end
-end
-
-local function create_command_context(
-	user: types.User,
-	invocation_id: number | false
-)
-	assert(
-		not state.command_context[coroutine.running()],
-		"there is already a command context for this thread"
-	)
-	state.command_context[coroutine.running()] = {
-		executor = user,
-		invocation_id = invocation_id,
-	}
-
-	return function() state.command_context[coroutine.running()] = nil end
-end
-
-local function get_command_context(): CommandContext?
-	return state.command_context[coroutine.running()]
 end
 
 local function initiate_user_replication(user: types.UserPublic)
@@ -179,19 +163,18 @@ end
 
 return {
 
+	args = arguments,
+
 	parse = ast,
-	execute = function(ast: ast.Result)
+	execute = function(text: string)
 		local local_user = state.local_user
 		assert(IS_CLIENT, "cannot run commands outside of the client")
 		assert(local_user, "unable to run commands without a local user")
 
-		local fn = console.execute(ast)
-
-		return function()
-			local pop = create_command_context(user, invocation_id)
-			fn()
-			pop()
-		end
+		local pop = create_command_context(local_user :: types.User, false)
+		local ok, err = pcall(console.execute, text)
+		if not ok then console.console.output { kind = "error", text = err } end
+		pop()
 	end,
 
 	register_quick = console.register_quick,
