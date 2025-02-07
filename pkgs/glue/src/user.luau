@@ -26,7 +26,6 @@ local function create_user(options: {
 		roles = {},
 	}
 
-	print(debug.traceback())
 	if IS_SERVER and user.player then
 		net.server.fire_create_user(user.player, user.id, user.name)
 	end
