@@ -36,6 +36,12 @@ local function register_type(
 	types[type] = data
 end
 
+local function write_global(global: string, value: any)
+	assert(state.local_user, "cannot set global on server")
+	assert(string.match(global, "^[A-z%-@_]*$"), `{global} is not a valid name`)
+	vm.globals[global] = value
+end
+
 local function get_type(type: string) return types[type] end
 
 local function replicate_to_player(
@@ -234,6 +240,7 @@ return {
 	replicate_to_player = replicate_to_player,
 	execute = execute,
 	analyze = analyze,
+	write_global = write_global,
 
 	register_type = register_type,
 	get_type = get_type,

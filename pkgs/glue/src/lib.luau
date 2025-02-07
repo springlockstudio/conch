@@ -188,6 +188,8 @@ return {
 	remove_roles = user.remove_roles,
 	get_user = get_user,
 
+	set_var = console.write_global,
+
 	get_command_context = get_command_context,
 
 	register_type = console.register_type,
