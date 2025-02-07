@@ -23,6 +23,21 @@ local console: types.Console = {
 	output = print,
 }
 
+local types = {}
+
+local function register_type(
+	type: string,
+	data: {
+		convert: (any) -> any,
+		analysis: ctypes.AnalysisCommandArgument
+			| ctypes.AnalysisCommandVariadic,
+	}
+)
+	types[type] = data
+end
+
+local function get_type(type: string) return types[type] end
+
 local function replicate_to_player(
 	player: Player,
 	representation: types.CommandRepresentation
@@ -40,10 +55,11 @@ local function replicate_to_player(
 		return
 	end
 
-	net.server.fire_register_command(
-		player,
-		{ name = representation.name, permissions = representation.permissions }
-	)
+	net.server.fire_register_command(player, {
+		name = representation.name,
+		permissions = representation.permissions,
+		arguments = representation.arguments,
+	})
 end
 
 local busy = false
@@ -86,27 +102,43 @@ local function register_command<T...>(
 		callback: (T...) -> ...any,
 	}
 )
-	local arguments: {
-		{
-			variadic: true?,
-			convert: (...any) -> any,
-			analysis: ctypes.AnalysisCommandArgument,
+	local arguments: { types.Type } = (
+		{ info.arguments() }
+		or {
+			{
+				kind = "varargs",
+				type = "any",
+				name = "...",
+				description = "unspecified",
+			},
 		}
-	} =
-		{ info.arguments() } :: { any }
-
-	local analysis_arguments =
-		{
-			{ kind = "variadic" } :: ctypes.AnalysisCommandVariadic,
-		} :: { ctypes.AnalysisCommandArgument | ctypes.AnalysisCommandVariadic }
+	) :: any
+	local analysis_arguments: { ctypes.AnalysisCommandArgument | ctypes.AnalysisCommandVariadic } =
+		{}
+	local converts: { (any) -> any } = {}
 
 	for index, argument in arguments do
-		analysis_arguments[index] = argument.analysis
+		local data = get_type(argument.type)
+			or warn(`no argument of type "{argument.type}" is registered`)
+			or get_type "any"
+		local clone = table.clone(data.analysis)
+
+		converts[index] = data.convert
+		analysis_arguments[index] = {
+			kind = if argument.kind == "varargs"
+				then "variadic"
+				else "argument",
+			name = argument.name or clone.name,
+			description = argument.description,
+			type = clone.type,
+			suggestion_generator = clone.suggestion_generator,
+		}
 	end
 
 	local representation: types.CommandRepresentation = {
 		name = name,
 		permissions = info.permissions,
+		arguments = arguments,
 		type_info = {
 			kind = "command",
 			name = name,
@@ -128,12 +160,20 @@ local function register_command<T...>(
 			end
 		end
 
+		local variadic, last_index
 		for idx, argument in arguments do
 			if argument.variadic then
-				move(idx, argument.convert(select(idx, ...)))
+				variadic = converts[idx]
+				last_index = idx
 				break
 			else
-				custom[idx] = argument.convert((select(idx, ...)))
+				custom[idx] = converts[idx]((select(idx, ...)))
+			end
+		end
+
+		if variadic and last_index then
+			for idx = last_index + 1, select("#", ...) do
+				custom[idx] = variadic((select(idx, ...)))
 			end
 		end
 
@@ -194,6 +234,9 @@ return {
 	replicate_to_player = replicate_to_player,
 	execute = execute,
 	analyze = analyze,
+
+	register_type = register_type,
+	get_type = get_type,
 
 	ast = ast,
 }

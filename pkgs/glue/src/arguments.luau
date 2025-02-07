@@ -1,111 +1,176 @@
 local Players = game:GetService "Players"
 
+local console = require "./console"
 local context = require "./context"
-local types = require "../luau_packages/types"
-local arguments = {}
+local types = require "./types"
 
-local function noop(...) return ... end
+local function noop(v) return v end
 
-type ArgumentData = {
-	convert: (consume: (any) -> ()) -> any,
-	analysis: types.AnalysisCommandArgument,
+local function wrap_if_not(value)
+	return if type(value) == "table" then value else { value }
+end
+
+local anyT = {
+	convert = noop,
+
+	analysis = {
+		kind = "argument",
+		name = "any",
+		type = "any",
+	},
 }
 
-function arguments.any(name: string?, description: string?): any
-	return {
-		convert = noop,
+local stringT = {
+	convert = noop,
 
-		analysis = {
-			kind = "argument",
-			name = name or "any",
-			description = description,
-			type = "any",
-		},
-	} :: any
-end
+	analysis = {
+		kind = "argument",
+		name = "string",
+		type = "string",
+	},
+}
 
-function arguments.string(name: string?, description: string?): string
-	return {
-		convert = noop,
+local stringsT = {
+	convert = wrap_if_not,
 
-		analysis = {
-			kind = "argument",
-			name = name or "string",
-			description = description,
-			type = "string",
-		},
-	} :: any
-end
+	analysis = {
+		kind = "argument",
+		name = "strings",
+		type = "{ string }",
+	},
+}
 
-function arguments.number(name: string?, description: string?): number
-	return {
-		convert = noop,
+local numberT = {
+	convert = noop,
 
-		analysis = {
-			kind = "argument",
-			name = name or "number",
-			description = description,
-			type = "number",
-		},
-	} :: any
-end
+	analysis = {
+		kind = "argument",
+		name = "number",
+		type = "number",
+	},
+}
 
-function arguments.boolean(name: string?, description: string?): boolean
-	return {
-		convert = noop,
+local numbersT = {
+	convert = wrap_if_not,
 
-		analysis = {
-			kind = "argument",
-			name = name or "boolean",
-			description = description,
-			type = "boolean",
+	analysis = {
+		kind = "argument",
+		name = "numbers",
+		type = "{ number }",
+	},
+}
 
-			suggestion_generator = function(text: string)
-				local suggestions = {}
+local booleanT = {
+	convert = noop,
 
-				if string.sub("true", 1, #text) == text then
-					table.insert(suggestions, "true")
-				end
+	analysis = {
+		kind = "argument",
+		name = "boolean",
+		type = "boolean",
 
-				if string.sub("false", 1, #text) == text then
-					table.insert(suggestions, "false")
-				end
+		suggestion_generator = function(text: string)
+			local suggestions = {}
 
-				return suggestions
-			end,
-		},
-	} :: any
-end
-
-function arguments.table(name: string?, description: string?): {}
-	return {
-		convert = noop,
-
-		analysis = {
-			kind = "argument",
-			name = name or "table",
-			description = description,
-			type = "table",
-		},
-	}
-end
-
-function arguments.enum<T>(options: { T }, name: string?, description: string?): T
-	local map = {}
-
-	for _, value in options do
-		map[tostring(value)] = value
-	end
-
-	return {
-		convert = function(...)
-			local values = {}
-			for i = 1, select("#", ...) do
-				local key = tostring((select(i, ...)))
-				if map[key] == nil then error(`{key} is not valid`, 0) end
-				values[i] = map[key]
+			if string.sub("true", 1, #text) == text then
+				table.insert(suggestions, "true")
 			end
-			return unpack(values)
+
+			if string.sub("false", 1, #text) == text then
+				table.insert(suggestions, "false")
+			end
+
+			return suggestions
+		end,
+	},
+}
+
+local booleansT = {
+	convert = wrap_if_not,
+
+	analysis = {
+		kind = "argument",
+		name = "boolean",
+		type = "boolean",
+
+		suggestion_generator = function(text: string)
+			local suggestions = {}
+
+			if string.sub("true", 1, #text) == text then
+				table.insert(suggestions, "true")
+			end
+
+			if string.sub("false", 1, #text) == text then
+				table.insert(suggestions, "false")
+			end
+
+			return suggestions
+		end,
+	},
+}
+
+local tableT = {
+	convert = noop,
+
+	analysis = {
+		kind = "argument",
+		name = "table",
+		type = "table",
+	},
+}
+
+local function into_vector(value: vector | Vector3 | { number })
+	if type(value) == "vector" then
+		return value
+	elseif typeof(value) == "table" then
+		return vector.create(value[1] or 0, value[2] or 0, value[3] or 0)
+	else
+		error(`{value} is not valid`, 0)
+	end
+end
+
+local vectorT = {
+	convert = into_vector,
+
+	analysis = {
+		kind = "argument",
+		name = "vector",
+		type = "vector",
+	},
+}
+local vectorsT = {
+	convert = function(
+		value: vector | Vector3 | { vector | Vector3 | { number } }
+	)
+		if type(value) == "vector" then
+			return { value }
+		elseif typeof(value) == "table" then
+			local t = {}
+			for i, v in value do
+				t[i] = into_vector(v)
+			end
+			return t
+		else
+			error(`{value} is not valid`, 0)
+		end
+	end,
+
+	analysis = {
+		kind = "argument",
+		name = "vector",
+		type = "vector",
+	},
+}
+
+local function map_enum<V>(
+	map: { [string]: V },
+	name: string?,
+	description: string?
+)
+	return {
+		convert = function(value)
+			local key = tostring(value)
+			if map[key] == nil then error(`{key} is not valid`, 0) end
+			return map[key]
 		end,
 
 		analysis = {
@@ -122,7 +187,21 @@ function arguments.enum<T>(options: { T }, name: string?, description: string?):
 				return suggestions
 			end,
 		},
-	} :: any
+	}
+end
+
+local function create_enum<T>(
+	options: { T },
+	name: string?,
+	description: string?
+): T
+	local map = {}
+
+	for _, value in options do
+		map[tostring(value)] = value
+	end
+
+	return map_enum(map, name, description)
 end
 
 local function convert_arg_to_player(arg: string | number | "@s"): Player
@@ -130,15 +209,17 @@ local function convert_arg_to_player(arg: string | number | "@s"): Player
 	if arg == "@s" then
 		return ctx and ctx.executor.player or error "not executed by a player"
 	elseif typeof(arg) == "number" then
-		return assert(
+		local player = assert(
 			Players:GetPlayerByUserId(arg),
 			`player with id {arg} is not in this server`
 		)
+		return player
 	elseif typeof(arg) == "string" then
-		return assert(
+		local player = assert(
 			Players:FindFirstChild(arg) :: Player,
 			`player "{arg}" is not valid`
 		)
+		return player
 	else
 		error(`unknown arg {arg}`)
 	end
@@ -162,100 +243,144 @@ local function convert_arg_to_players(
 	end
 end
 
-function arguments.player<T>(name: string?, description: string?): Player
-	return {
-		convert = function(...)
-			local values = { ... }
+local playerT = {
+	convert = function(...)
+		local values = { ... }
 
-			for i, v in values do
-				values[i] = convert_arg_to_player(v)
+		for i, v in values do
+			values[i] = convert_arg_to_player(v)
+		end
+
+		return unpack(values)
+	end,
+
+	analysis = {
+		kind = "argument",
+		name = "player",
+		type = "Player",
+		suggestion_generator = function(text: string)
+			local suggestions = {}
+
+			if string.sub("@s", 1, #text) == text then
+				table.insert(suggestions, "@s")
 			end
 
-			return unpack(values)
-		end,
-
-		analysis = {
-			kind = "argument",
-			name = name or "player",
-			description = description,
-			type = "Player",
-			suggestion_generator = function(text: string)
-				local suggestions = {}
-
-				if string.sub("@s", 1, #text) == text then
-					table.insert(suggestions, "@s")
+			for _, player in Players:GetPlayers() do
+				if
+					string.sub(player.Name, 1, #text) == text
+					or string.sub(player.DisplayName, 1, #text) == text
+				then
+					table.insert(suggestions, player.Name)
 				end
-
-				for _, player in Players:GetPlayers() do
-					if
-						string.sub(player.Name, 1, #text) == text
-						or string.sub(player.DisplayName, 1, #text) == text
-					then
-						table.insert(suggestions, player.Name)
-					end
-				end
-
-				return suggestions
-			end,
-		},
-	} :: any
-end
-
-function arguments.players<T>(name: string?, description: string?): { Player }
-	return {
-		convert = function(...)
-			local values = { ... }
-
-			for i, v in values do
-				values[i] = convert_arg_to_players(v)
 			end
 
-			print(values)
-			return unpack(values)
+			return suggestions
 		end,
+	},
+}
 
-		analysis = {
-			kind = "argument",
-			name = name or "players",
+local playersT = {
+	kind = "any",
+	convert = function(...)
+		local values = { ... }
+
+		for i, v in values do
+			values[i] = convert_arg_to_players(v)
+		end
+
+		print(values)
+		return unpack(values)
+	end,
+
+	analysis = {
+		kind = "argument",
+		name = "players",
+		type = "{ Player }",
+		suggestion_generator = function(text: string)
+			local suggestions = {}
+
+			if string.sub("@s", 1, #text) == text then
+				table.insert(suggestions, "@s")
+			end
+			if string.sub("@a", 1, #text) == text then
+				table.insert(suggestions, "@a")
+			end
+
+			for _, player in Players:GetPlayers() do
+				if
+					string.sub(player.Name, 1, #text) == text
+					or string.sub(player.DisplayName, 1, #text) == text
+				then
+					table.insert(suggestions, player.Name)
+				end
+			end
+
+			return suggestions
+		end,
+	},
+}
+
+local function generate_names_for_enum(enum: Enum)
+	local map = {}
+
+	for _, item: EnumItem in enum:GetEnumItems() do
+		map[item.Name] = item
+	end
+
+	return map_enum(map, tostring(enum))
+end
+
+console.register_type("any", anyT)
+console.register_type("string", stringT)
+console.register_type("strings", stringsT)
+console.register_type("number", numberT)
+console.register_type("numbers", numbersT)
+console.register_type("boolean", booleanT)
+console.register_type("booleans", booleansT)
+console.register_type("table", tableT)
+console.register_type("vector", vectorT)
+console.register_type("vectors", vectorsT)
+console.register_type("player", playerT)
+console.register_type("players", playersT)
+console.register_type("userinput", generate_names_for_enum(Enum.UserInputType))
+
+type G<T> = (name: string?, description: string?) -> T
+
+local function generator(type: string): any
+	return function(name: string?, description: string?)
+		return {
+			name = name,
 			description = description,
-			type = "{ Player }",
-			suggestion_generator = function(text: string)
-				local suggestions = {}
-
-				if string.sub("@s", 1, #text) == text then
-					table.insert(suggestions, "@s")
-				end
-				if string.sub("@a", 1, #text) == text then
-					table.insert(suggestions, "@a")
-				end
-
-				for _, player in Players:GetPlayers() do
-					if
-						string.sub(player.Name, 1, #text) == text
-						or string.sub(player.DisplayName, 1, #text) == text
-					then
-						table.insert(suggestions, player.Name)
-					end
-				end
-
-				return suggestions
-			end,
-		},
-	} :: any
+			kind = "arg",
+			type = type,
+		}
+	end
 end
 
-function arguments.variadic<T>(argument: T): ...T
-	local a: ArgumentData = argument :: any
-	return {
-		variadic = true,
-		convert = a.convert,
-		analysis = {
-			kind = "variadic",
-			description = a.analysis.description,
-			type = a.analysis.type,
-			suggestion_generator = a.analysis.suggestion_generator,
-		},
-	}
+local function variadic<T>(argument: T): ...T
+	local a: types.Type = argument :: any
+	a.kind = "varargs"
+	return a
 end
 
-return arguments
+return {
+
+	any = generator "any" :: G<any>,
+	string = generator "string" :: G<string>,
+	strings = generator "strings" :: G<{ string }>,
+	number = generator "number" :: G<number>,
+	numbers = generator "numbers" :: G<{ number }>,
+	boolean = generator "boolean" :: G<boolean>,
+	booleans = generator "booleans" :: G<{ boolean }>,
+	table = generator "table" :: G<{}>,
+	vector = generator "vector" :: G<vector>,
+	vectors = generator "vectors" :: G<{ vector }>,
+	player = generator "player" :: G<Player>,
+	players = generator "players" :: G<{ Player }>,
+
+	userinput = generator "userinput" :: G<Enum.UserInputType>,
+
+	variadic = variadic,
+	enum_new = create_enum,
+	enum_map = map_enum,
+}

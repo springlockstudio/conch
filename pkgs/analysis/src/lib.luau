@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-																														| ast.Command
+																																		| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -289,19 +289,19 @@ local function generate_analysis_info(
 					break
 				end
 			end
-			local arg_info: types.AnalysisCommandArgument | types.AnalysisCommandVariadic =
+			local arg_info: (types.AnalysisCommandArgument | types.AnalysisCommandVariadic)? =
 				command_info.arguments[index]
 
 			if index > #command_info.arguments then
 				arg_info = command_info.arguments[#command_info.arguments]
 
-				if arg_info.kind ~= "variadic" then
+				if arg_info and arg_info.kind ~= "variadic" then
 					LOG("warn", `no argument #{index}`)
 					return arg_analyzed
 				end
 			end
 
-			if arg_info.suggestion_generator then
+			if arg_info and arg_info.suggestion_generator then
 				local generator = arg_info.suggestion_generator
 				local text = arg_analyzed.text
 				local suggestions = generator(text)
@@ -371,7 +371,10 @@ local function generate_analysis_info(
 		if expr.kind == "lambda" then
 			return process_function(expr.body)
 		elseif expr.kind == "evaluate" then
-			if position_relative(get_span(expr.body)) == "within" then
+			if
+				position_relative(get_span(expr.body)) == "within"
+				and expr.body.value
+			then
 				return process_expression_or_command(expr.body.value)
 			end
 		elseif expr.kind == "identifier" then

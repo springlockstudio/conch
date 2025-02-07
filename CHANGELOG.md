@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `@` as a valid symbol for identifiers
+- Add server argument replication
+- Refactor how developers add arguments
+- Add `console.register_type`
+
+### Fixes
+
+- Fixed error in analysis when no arguments are provided
 
 --------------------------------------------------------------------------------
 

@@ -1,5 +1,12 @@
 local types = require "../luau_packages/types"
 
+export type Type = {
+	kind: "varargs" | "arg",
+	type: string,
+	name: string,
+	description: string,
+}
+
 export type User = {
 	read id: string,
 	read name: string,
@@ -35,6 +42,7 @@ export type CommandRepresentation = {
 	read permissions: { string },
 	read callback: (...any) -> ...any,
 	read type_info: types.AnalysisCommand,
+	read arguments: { Type },
 
 	dirty_replicate: boolean,
 }

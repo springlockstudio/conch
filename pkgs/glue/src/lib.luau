@@ -190,6 +190,8 @@ return {
 
 	get_command_context = get_command_context,
 
+	register_type = console.register_type,
+
 	log = function(kind: "warn" | "info" | "error" | "normal", text: string)
 		if IS_SERVER then
 			local context = state.command_context[coroutine.running()]

@@ -35,24 +35,29 @@ end
 
 local function register_command(data: net.RegisterCommandPacket)
 	-- warn("NEW SERVER COMMAND", data.name)
-	console.register_quick(data.name, function(...)
-		local thread = coroutine.running()
-		invocation_id += 1
-		state.continuations[invocation_id] = thread
+	console.register_command(data.name, {
+		permissions = data.permissions,
+		arguments = function() return unpack(data.arguments) end :: any,
 
-		net.client.invoke_command(invocation_id, data.name, { ... })
+		callback = function(...)
+			local thread = coroutine.running()
+			invocation_id += 1
+			state.continuations[invocation_id] = thread
 
-		-- print("waiting for function to finish", data.name)
-		local reply = (coroutine.yield()) :: net.InvokeReplyPacket
-		-- print("resuming function")
+			net.client.invoke_command(invocation_id, data.name, { ... })
 
-		if reply.status == "ok" then
-			-- print("unpacking with", data.results)
-			return unpack(reply.results)
-		else
-			error "something went wrong on the server"
-		end
-	end, unpack(data.permissions))
+			-- print("waiting for function to finish", data.name)
+			local reply = (coroutine.yield()) :: net.InvokeReplyPacket
+			-- print("resuming function")
+
+			if reply.status == "ok" then
+				-- print("unpacking with", data.results)
+				return unpack(reply.results)
+			else
+				error "something went wrong on the server"
+			end
+		end,
+	})
 end
 
 local function receive_server_results(data: net.InvokeReplyPacket)
