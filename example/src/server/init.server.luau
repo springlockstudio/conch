@@ -1,4 +1,7 @@
-local conch = require(game.ReplicatedStorage.packages.conch)
+local Players = game:GetService "Players"
+local ReplicatedStorage = game:GetService "ReplicatedStorage"
+
+local conch = require(ReplicatedStorage.packages.conch)
 
 conch.initiate_default_lifecycle()
 
@@ -7,14 +10,20 @@ conch.register_quick("meow", function()
 	return true
 end)
 
+conch.register("test", {
+	permissions = {},
+	arguments = function() return conch.args.player() end,
+
+	callback = function(player) end,
+})
+
 local function playeradded(player: Player)
 	local user = conch.get_user(player)
-	
+
 	conch.give_roles(user, "super-user")
-	
 end
 
-game.Players.PlayerAdded:Connect(playeradded)
-for _, player in game.Players:GetPlayers() do
+Players.PlayerAdded:Connect(playeradded)
+for _, player in Players:GetPlayers() do
 	playeradded(player)
 end
