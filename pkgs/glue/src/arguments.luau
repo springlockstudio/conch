@@ -179,9 +179,12 @@ local function map_enum<V>(
 			description = description,
 			type = "enum",
 			suggestion_generator = function(text: string)
+				text = text:lower()
 				local suggestions = {}
 				for key in map do
-					if string.sub(key, 1, #text) ~= text then continue end
+					if string.sub(key:lower(), 1, #text) ~= text then
+						continue
+					end
 					table.insert(suggestions, key)
 				end
 				return suggestions
@@ -259,6 +262,7 @@ local playerT = {
 		name = "player",
 		type = "Player",
 		suggestion_generator = function(text: string)
+			text = text:lower()
 			local suggestions = {}
 
 			if string.sub("@s", 1, #text) == text then
@@ -267,8 +271,9 @@ local playerT = {
 
 			for _, player in Players:GetPlayers() do
 				if
-					string.sub(player.Name, 1, #text) == text
-					or string.sub(player.DisplayName, 1, #text) == text
+					string.sub(player.Name:lower(), 1, #text) == text
+					or string.sub(player.DisplayName:lower(), 1, #text)
+						== text
 				then
 					table.insert(suggestions, player.Name)
 				end
@@ -296,6 +301,7 @@ local playersT = {
 		name = "players",
 		type = "{ Player }",
 		suggestion_generator = function(text: string)
+			text = text:lower()
 			local suggestions = {}
 
 			if string.sub("@s", 1, #text) == text then
@@ -307,8 +313,9 @@ local playersT = {
 
 			for _, player in Players:GetPlayers() do
 				if
-					string.sub(player.Name, 1, #text) == text
-					or string.sub(player.DisplayName, 1, #text) == text
+					string.sub(player.Name:lower(), 1, #text) == text
+					or string.sub(player.DisplayName:lower(), 1, #text)
+						== text
 				then
 					table.insert(suggestions, player.Name)
 				end
