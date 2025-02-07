@@ -162,7 +162,7 @@ local function generate_wally_release_files(path: string)
 			`local main = require(script.lib)`,
 		}
 
-		for value in string.gmatch(lib_file, "export type (.-) =") do
+		for value in string.gmatch(lib_file, "export type (.-) = module.") do
 			local export_without_default = string.gsub(value, "=.->", ">")
 			table.insert(
 				init_file,
@@ -179,13 +179,15 @@ local function generate_wally_release_files(path: string)
 		local dependencies = pesde_toml.dependencies
 		if dependencies then
 			for name, dependency in dependencies do
+				local realm = dependency.target or pesde_toml.target.environment
+				if realm ~= "roblox" then continue end
 				local file =
 					fs.readFile(path .. "/roblox_packages/" .. name .. ".luau")
 				local package_file = {
 					`local main = require(script.Parent.Parent.Parent["{name}"])`,
 				}
 
-				for value in string.gmatch(file, "export type (.-) =") do
+				for value in string.gmatch(file, "export type (.-) = module.") do
 					local export_without_default =
 						string.gsub(value, "=.->", ">")
 					table.insert(
@@ -196,6 +198,35 @@ local function generate_wally_release_files(path: string)
 
 				table.insert(package_file, "return main")
 				roblox_packages[name] = table.concat(package_file, "\n")
+			end
+		end
+	end
+
+	local luau_packages: { [string]: string } = {}
+	do
+		local dependencies = pesde_toml.dependencies
+		if dependencies then
+			for name, dependency in dependencies do
+				local realm = dependency.target or pesde_toml.target.environment
+				if realm ~= "luau" then continue end
+				local file =
+					fs.readFile(path .. "/luau_packages/" .. name .. ".luau")
+				local package_file = {
+					`local main = require(script.Parent.Parent.Parent["{name}"])`,
+				}
+
+				for value in string.gmatch(file, "export type (.-) = module.") do
+					local export_without_default =
+						string.gsub(value, "=.->", ">")
+					print(export_without_default, value)
+					table.insert(
+						package_file,
+						`export type {value} = main.{export_without_default}`
+					)
+				end
+
+				table.insert(package_file, "return main")
+				luau_packages[name] = table.concat(package_file, "\n")
 			end
 		end
 	end
@@ -212,7 +243,13 @@ local function generate_wally_release_files(path: string)
 			realm = "shared",
 			repository = pesde_toml.repository,
 			include = { "/dist" },
-			exclude = { "pesde.toml", "pesde.lock", "src", "roblox_packages" },
+			exclude = {
+				"pesde.toml",
+				"pesde.lock",
+				"src",
+				"roblox_packages",
+				"luau_packages",
+			},
 		}
 
 		local dependencies = {}
@@ -241,12 +278,17 @@ local function generate_wally_release_files(path: string)
 
 	fs.writeDir(path .. "/dist")
 	fs.writeDir(path .. "/dist/roblox_packages")
+	fs.writeDir(path .. "/dist/luau_packages")
 
 	for name, package in roblox_packages do
 		fs.writeFile(
 			path .. "/dist/roblox_packages/" .. name .. ".luau",
 			package
 		)
+	end
+
+	for name, package in luau_packages do
+		fs.writeFile(path .. "/dist/luau_packages/" .. name .. ".luau", package)
 	end
 
 	fs.copy(path .. "/src", path .. "/dist/src", true)
@@ -346,12 +388,12 @@ end
 for _, path in get_order() do
 	print("Generating release for", path)
 	generate_wally_release_files(path)
-	local status = process.spawn("wally", { "publish" }, {
-		cwd = path,
-		env = {},
-		shell = true,
-	})
+	-- local status = process.spawn("wally", { "publish" }, {
+	-- 	cwd = path,
+	-- 	env = {},
+	-- 	shell = true,
+	-- })
 
 	cleanup_files(path)
-	if status.ok == false then error(status.stderr) end
+	-- if status.ok == false then error(status.stderr) end
 end
