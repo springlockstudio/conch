@@ -1,4 +1,4 @@
-name = "alicesaidhi/conch_glue"
+name = "alicesaidhi/conch"
 version = "0.2.0-rc.2"
 includes = ["src/", "pesde.toml"]
 
