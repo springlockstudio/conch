@@ -144,7 +144,10 @@ local function generate_wally_release_files(path: string)
 			`local main = require("./{lib_file_path_without}")`,
 		}
 
-		for value in string.gmatch(lib_file, "export type (.-) =") do
+		for value in string.gmatch(lib_file, "export type ([%w%.<>=_]-) = ") do
+			if string.find(value, "<") and not string.find(value, ">") then
+				value ..= ">"
+			end
 			local export_without_default = string.gsub(value, "=.->", ">")
 			table.insert(
 				init_file,
@@ -218,7 +221,6 @@ local function generate_wally_release_files(path: string)
 				for value in string.gmatch(file, "export type (.-) = module.") do
 					local export_without_default =
 						string.gsub(value, "=.->", ">")
-					print(export_without_default, value)
 					table.insert(
 						package_file,
 						`export type {value} = main.{export_without_default}`
@@ -380,7 +382,7 @@ local function get_order()
 end
 
 local function cleanup_files(path: string)
-	fs.removeDir(path .. "/dist")
+	-- fs.removeDir(path .. "/dist")
 	fs.removeFile(path .. "/wally.toml")
 	fs.removeFile(path .. "/default.project.json")
 end
@@ -388,12 +390,12 @@ end
 for _, path in get_order() do
 	print("Generating release for", path)
 	generate_wally_release_files(path)
-	-- local status = process.spawn("wally", { "publish" }, {
-	-- 	cwd = path,
-	-- 	env = {},
-	-- 	shell = true,
-	-- })
+	local status = process.spawn("wally", { "publish" }, {
+		cwd = path,
+		env = {},
+		shell = true,
+	})
 
 	cleanup_files(path)
-	-- if status.ok == false then error(status.stderr) end
+	if status.ok == false then error(status.stderr) end
 end
