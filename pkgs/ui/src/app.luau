@@ -1,3 +1,5 @@
+local TextService = game:GetService "TextService"
+
 local background = require "./components/background"
 local conch = require "../roblox_packages/conch_glue"
 local corner = require "./components/corner"
@@ -18,6 +20,7 @@ local source = vide.source
 local derive = vide.derive
 local show = vide.show
 local changed = vide.changed
+local effect = vide.effect
 
 local STARTUP_TEXT = [[
 Conch	indev release.
@@ -68,6 +71,28 @@ return function()
 		local result = conch.analyze(input(), cursor_position() - 1)
 
 		return result
+	end)
+
+	local before_text = derive(
+		function() return string.sub(raw_text(), 1, cursor_position() - 1) end
+	)
+
+	local suggestion_position = source(vector.zero)
+
+	local bounds = Instance.new "GetTextBoundsParams"
+	bounds.Font = theme.font()
+	bounds.RichText = false
+	bounds.Size = 20
+	bounds.Width = 100000
+
+	effect(function()
+		local t = before_text()
+		bounds.Text = t
+		task.spawn(function()
+			local s = TextService:GetTextBoundsAsync(bounds)
+			if t ~= before_text() then return end
+			suggestion_position(s)
+		end)
 	end)
 
 	return screen {
@@ -153,9 +178,14 @@ return function()
 			return vide.create "Folder" {
 				suggestion {
 					x = function()
-						return cursor_position() * 10 + absolute_position().X
+						local t = string.split(before_text(), "\n")
+						return 10 * #t[#t] + 10
 					end,
-					y = function() return absolute_position().Y - 4 end,
+					y = function()
+						return suggestion_position().Y
+							+ absolute_position().Y
+							- 20
+					end,
 
 					analyzing = function() return analysis().analyzing end,
 					suggestions = function() return analysis().suggestions end,

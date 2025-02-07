@@ -288,7 +288,6 @@ local playersT = {
 			values[i] = convert_arg_to_players(v)
 		end
 
-		print(values)
 		return unpack(values)
 	end,
 
