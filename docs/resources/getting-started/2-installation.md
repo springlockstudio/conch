@@ -18,15 +18,15 @@ This goes over how to start setting up conch.
 In your `wally.toml`, add the following lines to your dependencies.
 
 ```toml
-conch = "alicesaidhi/conch-glue@0.2.0"
-conch_ui = "alicesaidhi/conch-ui@0.2.0"
+conch = "alicesaidhi/conch@0.2.0-rc.3"
+conch_ui = "alicesaidhi/conch-ui@0.2.0-rc.3"
 ```
 
 ==pesde
 In your terminal, run the following commands.
 
 ```sh
-pesde add alicesaidhi/conch_glue
+pesde add alicesaidhi/conch
 pesde add alicesaidhi/conch_ui
 ```
 
