@@ -1,5 +1,5 @@
 name = "alicesaidhi/conch"
-version = "0.2.0-rc.2"
+version = "0.2.0-rc.3"
 description = "Modern command library for Roblox"
 authors = ["alicesaidhi"]
 repository = "https://github.com/alicesaidhi/conch"

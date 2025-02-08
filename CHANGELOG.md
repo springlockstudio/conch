@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `glue.register_type`
 - Add `license` as a default command
 - Add `ui.bind_to` and `ui.mount` to bind opening to an input and mount the ui.
+- Add `glue.set_var`
 
 ### Fixes
 
