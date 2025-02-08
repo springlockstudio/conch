@@ -5,7 +5,7 @@ next: false
 
 # conch
 
-Package available through wally under `alicesaidhi/conch-glue` or on pesde as `alicesaidhi/conch_glue`.
+Package available through wally under `alicesaidhi/conch` or on pesde as `alicesaidhi/conch`.
 
 ## Functions
 
