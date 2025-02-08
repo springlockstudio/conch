@@ -6,19 +6,28 @@ local opened = require("./state").opened
 local conch = require "../roblox_packages/conch_glue"
 local vide = require "../roblox_packages/vide"
 
+local mounted = false
+
+local function mount()
+	if mounted then return end
+	mounted = true
+	return vide.mount(app, Players.LocalPlayer:WaitForChild "PlayerGui")
+end
+
+local function bind_to(input: Enum.KeyCode | Enum.UserInputType)
+	mount()
+	ContextActionService:BindAction("Trigger Conch", function(_, state)
+		if state == Enum.UserInputState.Begin then opened(not opened()) end
+	end, false, input)
+end
+
 return {
 
 	app = app,
-	mount = function()
-		return vide.mount(app, Players.LocalPlayer:WaitForChild "PlayerGui")
-	end,
+	mount = mount,
 	opened = opened,
 
-	bind_to = function(input: Enum.KeyCode | Enum.UserInputType)
-		ContextActionService:BindAction("Trigger Conch", function(_, state)
-			if state == Enum.UserInputState.Begin then opened(not opened()) end
-		end, false, input)
-	end,
+	bind_to = bind_to,
 
 	conch = conch,
 }
