@@ -9,3 +9,6 @@
 /out
 /local
 **/.pesde
+
+/docs/node_modules/
+/docs/.vitepress/cache

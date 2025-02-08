@@ -21,5 +21,11 @@
 
   "[luau]": {
 	"editor.formatOnSave": true
-  }
+  },
+
+  "[markdown]": {
+		"editor.wrappingStrategy": "simple",
+		"editor.wordWrap": "bounded",
+		"editor.wordWrapColumn": 80
+	}
 }
