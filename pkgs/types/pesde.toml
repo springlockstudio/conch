@@ -4,7 +4,7 @@ version = "0.2.0-rc.3"
 [target]
 environment = "luau"
 lib = "src/lib.luau"
-build_files = ["src/lib.luau"]
+build_files = ["src"]
 
 [indices]
 default = "https://github.com/daimond113/pesde-index"

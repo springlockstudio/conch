@@ -1,11 +1,11 @@
 name = "alicesaidhi/conch"
 version = "0.2.0-rc.3"
-includes = ["src/", "pesde.toml"]
+includes = ["src/**/*", "pesde.toml"]
 
 [target]
 environment = "roblox"
 lib = "src/lib.luau"
-build_files = ["src/"]
+build_files = ["src"]
 
 [indices]
 default = "https://github.com/daimond113/pesde-index"
