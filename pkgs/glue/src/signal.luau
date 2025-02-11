@@ -28,7 +28,7 @@ local function create_signal<T...>(): types.Signal<T...>
 
 	function signal:fire(...: T...)
 		for _, connection in connections do
-			task.spawn(connection.callback, ...)
+			connection.callback(...)
 		end
 	end
 
