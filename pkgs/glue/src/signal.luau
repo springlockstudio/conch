@@ -21,13 +21,14 @@ local function create_signal<T...>(): types.Signal<T...>
 		end
 
 		self.disconnect = disconnect
+		table.insert(connections, self)
 
 		return self
 	end
 
 	function signal:fire(...: T...)
 		for _, connection in connections do
-			connection.callback(...)
+			task.spawn(connection.callback, ...)
 		end
 	end
 
