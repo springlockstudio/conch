@@ -49,10 +49,12 @@ return function()
 
 	local raw_text = source ""
 	local working = source(false)
-	local focused = source(true)
+	local focused = source(false)
 	local cursor_position = source(0)
 	local absolute_position = source(Vector2.zero)
 	local pending = source()
+
+	effect(function() focused(state.opened()) end)
 
 	local input = derive(function()
 		if pending() then
