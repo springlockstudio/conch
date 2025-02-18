@@ -2,11 +2,12 @@ local ContextActionService = game:GetService "ContextActionService"
 local Players = game:GetService "Players"
 
 local app = require "./app"
-local opened = require("./state").opened
 local conch = require "../roblox_packages/conch_glue"
+local state = require "./state"
 local vide = require "../roblox_packages/vide"
 
 local mounted = false
+local opened, focused = state.opened, state.focused
 
 local function mount()
 	if mounted then return end
@@ -17,7 +18,10 @@ end
 local function bind_to(input: Enum.KeyCode | Enum.UserInputType)
 	mount()
 	ContextActionService:BindAction("Trigger Conch", function(_, state)
-		if state == Enum.UserInputState.Begin then opened(not opened()) end
+		if state == Enum.UserInputState.Begin then
+			opened(not opened())
+			focused(opened())
+		end
 	end, false, input)
 end
 

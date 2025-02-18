@@ -49,12 +49,9 @@ return function()
 
 	local raw_text = source ""
 	local working = source(false)
-	local focused = source(false)
 	local cursor_position = source(0)
 	local absolute_position = source(Vector2.zero)
 	local pending = source()
-
-	effect(function() focused(state.opened()) end)
 
 	local input = derive(function()
 		if pending() then
@@ -142,7 +139,7 @@ return function()
 
 						enter = function(value)
 							raw_text ""
-							focused(true)
+							state.focused(true)
 
 							if pending() then
 								pending(pending().append(value))
@@ -159,8 +156,8 @@ return function()
 							end
 						end,
 
-						focused = focused,
-						update_focused = focused,
+						focused = state.focused,
+						update_focused = state.focused,
 
 						{
 							CursorPosition = cursor_position,

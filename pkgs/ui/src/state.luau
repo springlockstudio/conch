@@ -5,6 +5,7 @@ local source = vide.source
 
 return {
 	opened = source(false),
+	focused = source(false),
 
 	logs = source({} :: { conch.Log }),
 }
