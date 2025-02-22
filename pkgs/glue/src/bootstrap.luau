@@ -6,6 +6,7 @@ local RunService = game:GetService "RunService"
 
 local arg = require "./arguments"
 local console = require "./console"
+local state = require "./state"
 local types = require "./types"
 
 local IS_CLIENT = RunService:IsClient()
@@ -62,6 +63,22 @@ return function()
 	local function info(...)
 		local text = concat(...)
 		output { kind = "info", text = text }
+	end
+
+	local function internal()
+		print(
+			`CONCH INTERNAL INFORMATION - {if RunService:IsClient()
+				then "CLIENT"
+				elseif RunService:IsServer() then "SERVER"
+				else "?"}`
+		)
+		print ""
+		print "REGISTERED ROLES:"
+		for role, perms in state.roles do
+			print(`[{role}]: {table.concat(perms, ", ")}`)
+		end
+		print ""
+		print "REGISTERED COMMANDS"
 	end
 
 	local function set(t: any, key: any, value: any) t[key] = value end

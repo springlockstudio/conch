@@ -6,6 +6,6 @@ realm = "shared"
 private = true
 
 [dependencies]
-conch = "alicesaidhi/conch-glue@0.2.0-rc.3"
+conch = "alicesaidhi/conch@0.2.0-rc.3"
 ui = "alicesaidhi/conch-ui@0.2.0-rc.3"
 vide = "centau/vide@0.3.1"

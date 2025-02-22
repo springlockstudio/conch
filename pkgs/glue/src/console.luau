@@ -25,15 +25,24 @@ local console: types.Console = {
 
 local types = {}
 
-local function register_type(
+local function register_type<T>(
 	type: string,
 	data: {
-		convert: (any) -> any,
+		convert: (any) -> T,
 		analysis: ctypes.AnalysisCommandArgument
 			| ctypes.AnalysisCommandVariadic,
 	}
 )
 	types[type] = data
+
+	return function(name: string?, description: string?): T
+		return {
+			name = name,
+			description = description,
+			kind = "arg",
+			type = type,
+		} :: any
+	end
 end
 
 local function write_global(global: string, value: any)
