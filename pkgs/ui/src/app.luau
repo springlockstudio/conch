@@ -25,7 +25,7 @@ local effect = vide.effect
 local cleanup = vide.cleanup
 
 local STARTUP_TEXT = [[
-Conch	0.2.0-rc.3
+Conch	0.2.0-rc.4
 This work is made available under the MIT license. You can view the license by running `license`.]]
 
 return function()

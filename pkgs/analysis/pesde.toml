@@ -1,5 +1,5 @@
 name = "alicesaidhi/conch_analysis"
-version = "0.2.0-rc.3"
+version = "0.2.0-rc.4"
 includes = ["src/**/*", "pesde.toml"]
 
 [target]
