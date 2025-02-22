@@ -21,6 +21,7 @@ jobs:
 
       - name: Run standalone compat release
         run: |
+          pesde install
           lune run standalone-compat-release
 
       - name: Build rbxm and release
