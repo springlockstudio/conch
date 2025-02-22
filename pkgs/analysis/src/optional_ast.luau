@@ -105,8 +105,14 @@ export type Expression_Var = {
 	read var: Var,
 }
 
+export type Expression_Vector = {
+	read kind: "vector",
+	read span: Span,
+	read contents: Surrounded<{ Expression }, "[", "]"?>,
+}
+
 export type Expression =
-	| Expression_Nil
+							| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -115,6 +121,7 @@ export type Expression =
 	| Expression_Lambda
 	| Expression_Evaluate
 	| Expression_Var
+	| Expression_Vector
 
 export type VarRoot_Global = {
 	read kind: "global",
@@ -191,7 +198,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-	| TableField_ExprKey
+										| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -669,6 +676,7 @@ local function parse(input: buffer, can_yield: boolean?)
 	local parse_while: () -> Stat_While
 	local parse_for: () -> Stat_For
 	local parse_return: () -> Last_Return
+	local parse_vector: () -> Expression_Vector
 
 	function parse_var_root(): VarRoot
 		-- print("root:", current_kind, current_token.text)
@@ -793,7 +801,9 @@ local function parse(input: buffer, can_yield: boolean?)
 
 	function parse_var(): Var
 		local root = parse_var_root()
-		local suffixes = parse_var_suffixes()
+		local suffixes = if root.kind ~= "global"
+			then parse_var_suffixes()
+			else {} :: never
 
 		local start = root.span.x
 		local finish = if #suffixes > 0
@@ -964,6 +974,38 @@ local function parse(input: buffer, can_yield: boolean?)
 		end
 	end
 
+	function parse_vector(): Expression_Vector
+		local left = expect "["
+		local min, max = left.span.x, left.span.y
+		local contents = {}
+
+		local n = 0
+
+		while n < 3 and not current_is "]" do
+			if current_is "eof" then break end
+			if n ~= 0 and current_is "," then expect "," end
+			if current_is "eof" then break end
+			n += 1
+
+			local expr = parse_expression()
+			contents[n] = expr
+			max = expr.span.y
+		end
+
+		local right = if current_is "]" then expect "]" else nil
+		if right then max = right.span.y end
+
+		return {
+			kind = "vector",
+			span = vector.create(min, max, 0),
+			contents = {
+				left = left,
+				right = right,
+				value = contents,
+			},
+		}
+	end
+
 	function parse_expression(): Expression
 		if current_is "$" and lookahead_is "(" then
 			-- nested call
@@ -1048,6 +1090,8 @@ local function parse(input: buffer, can_yield: boolean?)
 		elseif current_is "{" then
 			local t = parse_table()
 			return { kind = "table", table = t, span = t.span }
+		elseif current_is "[" then
+			return parse_vector()
 		else
 			return report(`expected expression, got {current_kind}`)
 		end
@@ -1069,6 +1113,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				or current_is "identifier"
 				or current_is "{"
 				or current_is "|"
+				or current_is "["
 			)
 		do
 			local expression = parse_expression()

@@ -97,6 +97,12 @@ export type Expression_Evaluate = {
 	read body: ExpressionOrCommand,
 }
 
+export type Expression_Vector = {
+	read kind: "vector",
+	read span: Span,
+	read contents: Separated<Expression>,
+}
+
 export type Expression_Var = {
 	read kind: "var",
 	read span: Span,
@@ -104,7 +110,7 @@ export type Expression_Var = {
 }
 
 export type Expression =
-	| Expression_Nil
+				| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -112,6 +118,7 @@ export type Expression =
 	| Expression_Lambda
 	| Expression_Evaluate
 	| Expression_Var
+	| Expression_Vector
 
 export type VarRoot_Global = {
 	read kind: "global",
@@ -183,7 +190,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-	| TableField_ExprKey
+												| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -292,6 +299,11 @@ export type Instruction_PushFunction = {
 	body: { Instruction },
 }
 
+-- Pops x, y and z and pushes a vector onto the stack
+export type Instruction_PushVector = {
+	kind: "push_vector",
+}
+
 -- Pushes nil onto the stack
 export type Instruction_PushNil = {
 	kind: "push_nil",
@@ -383,6 +395,7 @@ export type Instruction =
 	| Instruction_PushString
 	| Instruction_PushTable
 	| Instruction_PushFunction
+	| Instruction_PushVector
 	| Instruction_PushNil
 	| Instruction_PushGlobal
 	| Instruction_PushLocal

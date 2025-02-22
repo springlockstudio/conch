@@ -146,6 +146,12 @@ local function create_vm()
 			PUSH(VM_FN)
 		elseif instruction.kind == "push_global" then
 			PUSH(globals[instruction.name])
+		elseif instruction.kind == "push_vector" then
+			local z = POP()
+			local y = POP()
+			local x = POP()
+
+			PUSH(vector.create(x, y, z))
 		elseif instruction.kind == "push_local" then
 			PUSH(locals[instruction.index])
 		elseif instruction.kind == "push_nil" then

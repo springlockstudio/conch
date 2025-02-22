@@ -68,6 +68,7 @@ local function compile(
 	local compile_for
 	local compile_while
 	local compile_block
+	local compile_vector
 
 	function compile_expression(e: types.Expression)
 		--FIXME: Type unions don't properly evaluate state??
@@ -102,7 +103,35 @@ local function compile(
 			compile_table(expression.table)
 		elseif expression.kind == "var" then
 			compile_var(expression.var)
+		elseif expression.kind == "vector" then
+			compile_vector(expression)
 		end
+	end
+
+	function compile_vector(vector: types.Expression_Vector)
+		local x = vector.contents[1]
+		local y = vector.contents[2]
+		local z = vector.contents[3]
+
+		if x then
+			compile_expression(x)
+		else
+			INSERT { kind = "push_number", n = 0 }
+		end
+		if y then
+			compile_expression(y)
+		else
+			INSERT { kind = "push_number", n = 0 }
+		end
+		if z then
+			compile_expression(z)
+		else
+			INSERT { kind = "push_number", n = 0 }
+		end
+
+		INSERT {
+			kind = "push_vector",
+		}
 	end
 
 	function compile_table(t: types.Table)

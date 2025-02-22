@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-					| ast.Command
+										| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -379,6 +379,12 @@ local function generate_analysis_info(
 				and expr.body.value
 			then
 				return process_expression_or_command(expr.body.value)
+			end
+		elseif expr.kind == "vector" then
+			for idx, value in expr.contents.value do
+				if position_relative(value.span) ~= "before" then
+					return process_expression(value)
+				end
 			end
 		elseif expr.kind == "identifier" then
 			return no_suggestions(expr.token.text)
