@@ -205,7 +205,7 @@ local vectorsT = {
 	},
 }
 
-local function map_enum<V>(
+local function enum_map<V>(
 	map: { [string]: V },
 	name: string?,
 	description: string?
@@ -221,7 +221,7 @@ local function map_enum<V>(
 			kind = "argument",
 			name = name or "enum",
 			description = description,
-			type = "enum",
+			type = name or "enum",
 			suggestion_generator = function(text: string)
 				text = text:lower()
 				local suggestions = {}
@@ -237,18 +237,14 @@ local function map_enum<V>(
 	}
 end
 
-local function create_enum<T>(
-	options: { T },
-	name: string?,
-	description: string?
-): T
+local function enum_new<T>(options: { T }, name: string?, description: string?): T
 	local map = {}
 
 	for _, value in options do
 		map[tostring(value)] = value
 	end
 
-	return map_enum(map, name, description)
+	return enum_map(map, name, description)
 end
 
 local function convert_arg_to_player(arg: string | number | "@s"): Player
@@ -361,7 +357,7 @@ local function generate_names_for_enum(enum: Enum)
 		map[item.Name] = item
 	end
 
-	return map_enum(map, tostring(enum))
+	return enum_map(map, tostring(enum))
 end
 
 type G<T> = (name: string?, description: string?) -> T
@@ -393,6 +389,6 @@ return {
 	) :: G<Enum.UserInputType>,
 
 	variadic = variadic,
-	enum_new = create_enum,
-	enum_map = map_enum,
+	enum_new = enum_new,
+	enum_map = enum_map,
 }
