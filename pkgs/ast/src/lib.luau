@@ -437,7 +437,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				expr = expr,
 			}
 		else
-			return report(`invalid root {display(current_token)}`)
+			return report(`expected identifier, got {display(lookahead_token)}`)
 		end
 	end
 
@@ -624,7 +624,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				body = expr,
 				span = vector.create(start, finish, 0),
 			} :: any
-		elseif current_is "$" and lookahead_is "identifier" then
+		elseif current_is "$" then
 			-- variable
 			local var = parse_var()
 			return { kind = "var", var = var, span = var.span }

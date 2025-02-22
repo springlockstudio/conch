@@ -112,7 +112,7 @@ export type Expression_Vector = {
 }
 
 export type Expression =
-							| Expression_Nil
+									| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -198,7 +198,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-										| TableField_ExprKey
+												| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -735,7 +735,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				} :: VarRoot_Name
 			end
 		else
-			return report(`invalid root {display(current_token)}`)
+			return report(`expected identifier, got {display(lookahead_token)}`)
 		end
 	end
 

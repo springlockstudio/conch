@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-										| ast.Command
+																															| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -138,126 +138,7 @@ local function generate_analysis_info(
 	): AnalysisInformation
 		local pos = position_relative(stat.prefix.span)
 		if pos == "within" then
-			local var = stat.prefix
-			local prefix = var.prefix
-
-			if prefix.kind == "global" then
-				local suggestions: { AnalysisSuggestion } = {}
-				local text = get_text_token(prefix.token)
-				local analyzing
-
-				if expressions_too and string.sub("true", 1, #text) == text then
-					table.insert(suggestions, {
-						name = "true",
-						type = "true",
-
-						replace = var.span,
-						with = "true",
-					})
-				end
-
-				if
-					expressions_too
-					and string.sub("false", 1, #text) == text
-				then
-					table.insert(suggestions, {
-						name = "false",
-						type = "false",
-
-						replace = var.span,
-						with = "false",
-					})
-				end
-
-				if expressions_too and string.sub("nil", 1, #text) == text then
-					table.insert(suggestions, {
-						name = "nil",
-						type = "nil",
-
-						replace = var.span,
-						with = "nil",
-					})
-				end
-
-				if
-					not expressions_too
-					and string.sub("for", 1, #text) == text
-				then
-					table.insert(suggestions, {
-						name = "for",
-						type = "for",
-
-						replace = var.span,
-						with = "for",
-					})
-				end
-
-				if
-					not expressions_too
-					and string.sub("if", 1, #text) == text
-				then
-					table.insert(suggestions, {
-						name = "if",
-						type = "if",
-
-						replace = var.span,
-						with = "if",
-					})
-				end
-
-				if
-					not expressions_too
-					and string.sub("while", 1, #text) == text
-				then
-					table.insert(suggestions, {
-						name = "while",
-						type = "while",
-
-						replace = var.span,
-						with = "while",
-					})
-				end
-
-				if
-					not expressions_too
-					and string.sub("else", 1, #text) == text
-				then
-					table.insert(suggestions, {
-						name = "else",
-						type = "else",
-
-						replace = var.span,
-						with = "else",
-					})
-				end
-
-				for index, command in options.commands do
-					if string.sub(command.name, 1, #text) ~= text then
-						continue
-					end
-					if #text == #command.name then analyzing = command end
-
-					table.insert(suggestions, {
-						name = command.name,
-						description = command.description,
-						type = "Command",
-
-						replace = var.span,
-						with = command.name,
-					})
-				end
-				return {
-					at = where,
-					text = text,
-					logs = LOGS,
-					ast = processing.value,
-
-					analyzing = analyzing,
-					suggestions = suggestions,
-				}
-			else
-				return no_suggestions ""
-			end
+			return process_variable(stat.prefix, expressions_too)
 		elseif pos == "after" then
 			-- obtain the prefix
 			local var = stat.prefix
@@ -369,6 +250,241 @@ local function generate_analysis_info(
 		end
 	end
 
+	function process_var_prefix(var: ast.Var, expressions_too: boolean)
+		local prefix = var.prefix
+		local analyzing, text
+		local suggestions: { AnalysisSuggestion } = {}
+
+		if prefix.kind == "global" then
+			text = get_text_token(prefix.token)
+
+			if expressions_too and string.sub("true", 1, #text) == text then
+				table.insert(suggestions, {
+					name = "true",
+					type = "true",
+
+					replace = var.span,
+					with = "true",
+				})
+			end
+
+			if expressions_too and string.sub("false", 1, #text) == text then
+				table.insert(suggestions, {
+					name = "false",
+					type = "false",
+
+					replace = var.span,
+					with = "false",
+				})
+			end
+
+			if expressions_too and string.sub("nil", 1, #text) == text then
+				table.insert(suggestions, {
+					name = "nil",
+					type = "nil",
+
+					replace = var.span,
+					with = "nil",
+				})
+			end
+
+			if not expressions_too and string.sub("for", 1, #text) == text then
+				table.insert(suggestions, {
+					name = "for",
+					type = "for",
+
+					replace = var.span,
+					with = "for",
+				})
+			end
+
+			if not expressions_too and string.sub("if", 1, #text) == text then
+				table.insert(suggestions, {
+					name = "if",
+					type = "if",
+
+					replace = var.span,
+					with = "if",
+				})
+			end
+
+			if
+				not expressions_too
+				and string.sub("while", 1, #text) == text
+			then
+				table.insert(suggestions, {
+					name = "while",
+					type = "while",
+
+					replace = var.span,
+					with = "while",
+				})
+			end
+
+			if not expressions_too and string.sub("else", 1, #text) == text then
+				table.insert(suggestions, {
+					name = "else",
+					type = "else",
+
+					replace = var.span,
+					with = "else",
+				})
+			end
+
+			for index, command in options.commands do
+				local text = string.lower(text)
+				local name = string.lower(command.name)
+
+				if string.sub(name, 1, #text) ~= text then continue end
+				if #text == #command.name then analyzing = command end
+
+				table.insert(suggestions, {
+					name = command.name,
+					description = command.description,
+					type = "Command",
+
+					replace = var.span,
+					with = command.name,
+				})
+			end
+		elseif prefix.kind == "name" then
+			text = prefix.name and prefix.name.text or ""
+
+			for key, value in options.variables do
+				local text = string.lower(text)
+				local name = string.lower(key)
+
+				if string.sub(name, 1, #text) ~= text then continue end
+				if #text == #key then
+					analyzing = {
+						kind = "argument",
+						name = key,
+						type = typeof(value),
+					}
+				end
+
+				table.insert(suggestions, {
+					name = key,
+					type = typeof(value),
+					replace = prefix.name and prefix.name.span
+						or vector.create(prefix.span.x + 1, prefix.span.y),
+					with = key,
+				})
+			end
+		elseif prefix.kind == "paren" then
+			if prefix.expr.value then
+				return process_expression_or_command(prefix.expr.value)
+			end
+		end
+
+		return {
+			at = where,
+			text = text,
+			logs = LOGS,
+			ast = processing.value,
+
+			analyzing = analyzing,
+			suggestions = suggestions,
+		}
+	end
+
+	function process_variable(var: ast.Var, expressions_too: boolean)
+		if position_relative(var.prefix.span) == "within" then
+			return process_var_prefix(var, expressions_too)
+		end
+
+		if var.prefix.kind == "paren" then return no_suggestions "" end
+		if var.prefix.kind == "global" then return no_suggestions "" end
+
+		local prefix: ast.VarRoot_Name = var.prefix
+		local key = prefix.name and prefix.name.text
+
+		if not key then return no_suggestions "" end
+
+		local value = options.variables[key]
+		local span = vector.create(var.span.x, 0)
+		local text
+
+		if value == nil then
+			LOG("warn", `no defined variable named "{key}"`)
+			return no_suggestions(key)
+		end
+
+		for idx, suffix in var.suffixes do
+			if
+				type(value) ~= "table"
+				and type(value) ~= "userdata"
+				and type(value) ~= "vector"
+			then
+				LOG(
+					"warn",
+					`probably can't index "{key}" which is a "{typeof(value)}"`
+				)
+			end
+
+			if position_relative(suffix.span) ~= "within" then
+				if suffix.kind == "nameindex" then
+					local key = suffix.name and suffix.name.text
+					if not key then return no_suggestions(key) end
+					value = value[key]
+					text = key
+				else
+					return no_suggestions ""
+				end
+				continue
+			end
+
+			if suffix.kind == "nameindex" then
+				local key = suffix.name and suffix.name.text
+				if not key then return no_suggestions(key) end
+				text = key
+				span = suffix.name and suffix.name.span
+					or vector.create(suffix.span.x + 1, suffix.span.x + 1)
+			elseif suffix.kind == "exprindex" then
+				return no_suggestions ""
+			end
+
+			break
+		end
+
+		local suggestions = {}
+		local analyzing
+
+		if value[text] then
+			local v = value[text]
+			analyzing = {
+				kind = "argument",
+				name = text,
+				type = typeof(v),
+			}
+		end
+
+		if type(value) == "table" then
+			for key, value in pairs(value) do
+				local text = string.lower(text)
+				local name = string.lower(key)
+
+				if string.sub(name, 1, #text) ~= text then continue end
+
+				table.insert(suggestions, {
+					name = key,
+					with = key,
+					type = typeof(value),
+					replace = span,
+				})
+			end
+		end
+
+		return {
+			at = where,
+			text = text,
+			logs = LOGS,
+			analyzing = analyzing,
+
+			suggestions = suggestions,
+		}
+	end
+
 	function process_expression(expr: ast.Expression)
 		local expr = expr
 		if expr.kind == "lambda" then
@@ -388,6 +504,8 @@ local function generate_analysis_info(
 			end
 		elseif expr.kind == "identifier" then
 			return no_suggestions(expr.token.text)
+		elseif expr.kind == "var" then
+			return process_variable(expr.var, true)
 		end
 
 		return no_suggestions ""
