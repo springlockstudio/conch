@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-	| ast.Command
+					| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -121,8 +121,6 @@ local function generate_analysis_info(
 
 	local process_if_stat
 	local process_assignment
-	local process_command
-	local process_return
 	local process_for
 	local process_while
 	local process_block
@@ -277,9 +275,14 @@ local function generate_analysis_info(
 			if not command_info then return no_suggestions "" end
 
 			local index = 1
+			local span = vector.create(stat.prefix.span.y, 0)
+
 			local arg_analyzed: AnalysisInformation = no_suggestions ""
 			for i, argument in stat.arguments do
 				if position_relative(argument.span) == "within" then
+					if argument.kind == "identifier" then
+						span = argument.span
+					end
 					arg_analyzed =
 						process_expression(argument) :: AnalysisInformation
 					break
@@ -311,7 +314,7 @@ local function generate_analysis_info(
 						name = name,
 						type = text,
 
-						replace = vector.create(0, 0, 0),
+						replace = span,
 						with = name,
 					}
 				end

@@ -1,4 +1,5 @@
 local TextService = game:GetService "TextService"
+local UserInputService = game:GetService "UserInputService"
 
 local background = require "./components/background"
 local conch = require "../roblox_packages/conch_glue"
@@ -21,6 +22,7 @@ local derive = vide.derive
 local show = vide.show
 local changed = vide.changed
 local effect = vide.effect
+local cleanup = vide.cleanup
 
 local STARTUP_TEXT = [[
 Conch	0.2.0-rc.3
@@ -67,10 +69,31 @@ return function()
 		return if status.status == "error" then status.why else nil
 	end)
 
-	local analysis = derive(function()
-		local result = conch.analyze(input(), cursor_position() - 1)
+	local analysis = source(conch.analyze("", 0))
+	local selected_suggestion = source(1)
 
-		return result
+	effect(
+		function()
+			selected_suggestion(
+				math.clamp(
+					selected_suggestion(),
+					1,
+					math.max(1, #analysis().suggestions)
+				)
+			)
+		end
+	)
+
+	local deferred = false
+	effect(function()
+		raw_text()
+		cursor_position()
+		if deferred then return end
+		deferred = true
+		task.defer(function()
+			deferred = false
+			analysis(conch.analyze(raw_text(), cursor_position() - 1))
+		end)
 	end)
 
 	local before_text = derive(
@@ -94,6 +117,24 @@ return function()
 			suggestion_position(s)
 		end)
 	end)
+
+	local function autofill(text: string, span: vector, with: string)
+		local before = string.sub(text, 1, span.x)
+		local after = string.sub(text, span.y + 1, -1)
+
+		task.defer(cursor_position, span.x + #with + 2)
+		return before .. with .. " " .. after
+	end
+
+	cleanup(UserInputService.InputBegan:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.Down then
+			selected_suggestion(
+				math.min(selected_suggestion() + 1, #analysis().suggestions)
+			)
+		elseif input.KeyCode == Enum.KeyCode.Up then
+			selected_suggestion(math.max(1, selected_suggestion() - 1))
+		end
+	end))
 
 	return screen {
 		name = "Command Executor",
@@ -121,7 +162,24 @@ return function()
 				function()
 					return textbox {
 						text = raw_text,
-						update_text = raw_text,
+						update_text = function(text: string)
+							local at = string.sub(
+								text,
+								cursor_position() - 1,
+								cursor_position() - 1
+							)
+							local suggestion = analysis().suggestions
+
+							if at == "\t" and suggestion[1] then
+								text = autofill(
+									raw_text(),
+									suggestion[selected_suggestion()].replace,
+									suggestion[selected_suggestion()].with
+								)
+							end
+
+							raw_text(text)
+						end,
 						placeholder = "Enter your command",
 						text_size = 20,
 						xalignment = Enum.TextXAlignment.Left,
@@ -186,6 +244,7 @@ return function()
 							+ absolute_position().Y
 							- 20
 					end,
+					selected = selected_suggestion,
 
 					analyzing = function() return analysis().analyzing end,
 					suggestions = function() return analysis().suggestions end,
