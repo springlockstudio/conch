@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-																															| ast.Command
+	| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier

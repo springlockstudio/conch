@@ -9,7 +9,7 @@ type VMState = {
 }
 
 local function DEFINE_LOCAL(state: VMState, key: string)
-	table.insert(state.locals, 1, key)
+	table.insert(state.locals, key)
 end
 
 -- local function GET_VALUE_INDEX(state: VMState, key: string): (false | number, number)
@@ -306,8 +306,6 @@ local function compile(
 
 		if stat.expression.kind == "command" then
 			compile_command(stat.expression, arguments)
-		else
-			compile_expression(stat.expression)
 		end
 
 		local instruction: types.Instruction_IfNotNil =
@@ -315,11 +313,14 @@ local function compile(
 		INSERT(instruction)
 		local block_start = next_instruction
 
+		local state = {}
 		for i, argument in stat.call.arguments do
 			DEFINE_LOCAL(vm_state, argument.text)
+			state[i] = #vm_state.locals
 		end
 
 		compile_block(stat.call.block)
+
 		INSERT { kind = "goto", to = start }
 		instruction.to = next_instruction
 
