@@ -1,0 +1,29 @@
+name: release
+on:
+  release:
+    types: [published]
+
+permissions:
+    contents: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Rokit
+        uses: CompeyDev/setup-rokit@v0.1.2
+
+      - name: Run standalone compat release
+        run: |
+          lune run standalone-compat-release
+
+      - name: Build rbxm and release
+        run: |
+          rojo build build.project.json -o build.rbxm
+          gh release upload ${{github.event.release.tag_name}} conch.rbxm

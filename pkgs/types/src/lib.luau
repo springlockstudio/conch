@@ -390,7 +390,7 @@ export type Instruction_Return = {
 }
 
 export type Instruction =
-		| Instruction_PushNumber
+	| Instruction_PushNumber
 	| Instruction_PushBoolean
 	| Instruction_PushString
 	| Instruction_PushTable

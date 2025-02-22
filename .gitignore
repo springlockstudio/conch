@@ -5,6 +5,7 @@
 **/network/server.luau
 **/network/client.luau
 **/dist
+**/default.project.json
 
 /out
 /local
@@ -12,3 +13,5 @@
 
 /docs/node_modules/
 /docs/.vitepress/cache
+
+/build.rbxm

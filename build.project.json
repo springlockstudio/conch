@@ -1,0 +1,6 @@
+{
+	"name": "packages",
+	"tree": {
+		"$path": "pkgs"
+	}
+}
