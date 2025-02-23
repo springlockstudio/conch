@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-	| ast.Command
+			| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -548,6 +548,18 @@ local function generate_analysis_info(
 		return no_suggestions ""
 	end
 
+	function parse_for(stat: ast.Stat_For)
+		if
+			stat.expression
+			and position_relative(get_span(stat.expression)) == "within"
+		then
+			if stat.expression.value == nil then return no_suggestions "" end
+			return process_expression(stat.expression.value)
+		end
+
+		if stat.call then return process_function(stat.call) end
+	end
+
 	function process_block(block: ast.Block)
 		local statement
 		for _, stat in block.body do
@@ -568,9 +580,7 @@ local function generate_analysis_info(
 				elseif statement.kind == "return" then process_return(
 					statement
 				) -- parse_return(statement)
-				elseif
-					statement.kind == "for"
-				then no_suggestions "" -- parse_for(statement)
+				elseif statement.kind == "for" then parse_for(statement)
 				elseif statement.kind == "while" then process_while(
 					statement
 				)
