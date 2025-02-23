@@ -1,9 +1,6 @@
 import { defineConfig } from "vitepress";
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import { buildEndGenerateOpenGraphImages } from '@nolebase/vitepress-plugin-og-image/vitepress'
-import { 
-	InlineLinkPreviewElementTransform 
-} from '@nolebase/vitepress-plugin-inline-link-preview/markdown-it'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -37,7 +34,6 @@ export default defineConfig({
     markdown: {
         config(md) {
             md.use(tabsMarkdownPlugin);
-			md.use(InlineLinkPreviewElementTransform)
         }
     },
 
@@ -55,23 +51,23 @@ export default defineConfig({
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             { text: "Home", link: "/" },
-            { text: "Resources", link: "/resources/getting-started/1-why/" },
-            { text: "API", link: "/api/conch/"},
-			{ text: "Glossary", link: "/resources/glossary/" },
+            { text: "Resources", link: "/resources/getting-started/1-why" },
+            { text: "API", link: "/api/conch"},
+			{ text: "Glossary", link: "/resources/glossary" },
         ],
 
         sidebar: {
             "/api/": [
-                { text: "conch", link: "/api/conch/" },
-				{ text: "ui", link: "/api/ui/" },
+                { text: "conch", link: "/api/conch" },
+				{ text: "ui", link: "/api/ui" },
             ],
             "/resources/": [
-				{ text: "Glossary", link: "/resources/glossary/" },
+				{ text: "Glossary", link: "/resources/glossary" },
                 { text: "Getting Started", collapsed: false, items: [
-                    { text: "Why", link: "/resources/getting-started/1-why/" },
-                    { text: "Installation", link: "/resources/getting-started/2-installation/" },
-                    { text: "Setting Up", link: "/resources/getting-started/3-setting-up/" },
-					{ text: "Permissions", link: "/resources/getting-started/4-permissions/" },
+                    { text: "Why", link: "/resources/getting-started/1-why" },
+                    { text: "Installation", link: "/resources/getting-started/2-installation" },
+                    { text: "Setting Up", link: "/resources/getting-started/3-setting-up" },
+					{ text: "Permissions", link: "/resources/getting-started/4-permissions" },
 					{ text: "Custom Commands", link: "/resources/getting-started/5-custom-commands" },
                 ] },
                 { text: "Concepts", collapsed: false, items: [

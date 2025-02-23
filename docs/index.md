@@ -17,7 +17,7 @@ hero:
       link: /resources/getting-started/1-why/
     - theme: alt
       text: API Reference
-      link: /api/conch/
+      link: /api/conch
     - theme: alt
       text: Github
       link: https://github.com/alicesaidhi/conch

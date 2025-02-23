@@ -8,11 +8,6 @@ import {
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 import "./style.css";
 import './vars.css';
-import { 
-	NolebaseInlineLinkPreview,
-	NolebaseInlineLinkPreviewPlugin, 
-  } from '@nolebase/vitepress-plugin-inline-link-preview/client'
-
 export default {
   extends: DefaultTheme,
   Layout: () => {
@@ -24,10 +19,8 @@ export default {
   },
   enhanceApp({ app, router, siteData }) {
     // ...
-	app.use(NolebaseInlineLinkPreviewPlugin);
     app.component("DividePage", DividePage);
 	app.component("Button", VPButton)
-	app.component("VPNolebaseInlineLinkPreview", NolebaseInlineLinkPreview)
     enhanceAppWithTabs(app);
   },
 } satisfies Theme;
