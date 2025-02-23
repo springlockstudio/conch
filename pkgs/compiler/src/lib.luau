@@ -299,14 +299,19 @@ local function compile(
 	end
 
 	function compile_for(stat: types.Stat_For)
-		local start = next_instruction
 		local arguments = #stat.call.arguments
 		local previous_begins = loop_begins_at :: number
-		loop_begins_at = start
 
 		if stat.expression.kind == "command" then
-			compile_command(stat.expression, arguments)
+			compile_command(stat.expression, 1)
 		end
+
+		SET_VALUE "--iterator"
+		local start = next_instruction
+		loop_begins_at = start
+
+		GET_VALUE "--iterator"
+		INSERT { kind = "call", arguments = 0, results = arguments }
 
 		local instruction: types.Instruction_IfNotNil =
 			{ kind = "jump_if_not_nil", index = 1, to = 0 }
@@ -315,12 +320,12 @@ local function compile(
 
 		local state = {}
 		for i, argument in stat.call.arguments do
-			DEFINE_LOCAL(vm_state, argument.text)
-			state[i] = #vm_state.locals
+			SET_VALUE(argument.text)
 		end
 
 		compile_block(stat.call.block)
 
+		INSERT { kind = "reset" }
 		INSERT { kind = "goto", to = start }
 		instruction.to = next_instruction
 

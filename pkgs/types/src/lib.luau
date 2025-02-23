@@ -110,7 +110,7 @@ export type Expression_Var = {
 }
 
 export type Expression =
-	| Expression_Nil
+				| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -190,7 +190,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-	| TableField_ExprKey
+				| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -327,6 +327,10 @@ export type Instruction_PushLocal = {
 	index: number,
 }
 
+export type Instruction_Reset = {
+	kind: "reset",
+}
+
 -- Consumes n arguments and consumes the function and calls it with the function.
 -- If the function returns values, it pushes them onto the stack without limit or
 -- when results is reached.
@@ -410,6 +414,7 @@ export type Instruction =
 	| Instruction_IfNotNil
 	| Instruction_GotoTemp
 	| Instruction_Return
+	| Instruction_Reset
 
 -- VM
 

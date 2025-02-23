@@ -91,7 +91,7 @@ local function create_vm()
 				n = 0
 			end
 		elseif instruction.kind == "jump_if_not_nil" then
-			local value = POP()
+			local value = stack[1]
 			if value == nil then
 				instruction_at = instruction.to - 1
 				n = 0
@@ -174,6 +174,8 @@ local function create_vm()
 		elseif instruction.kind == "return" then
 			LOG("stack", #stack, stack[1])
 			instruction_at = instruction_end
+		elseif instruction.kind == "reset" then
+			n = 0
 		end
 	end
 
