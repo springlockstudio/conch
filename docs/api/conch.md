@@ -90,18 +90,18 @@ Registers a type which can be replicated
 - **Type**
 
     ```luau
-    function conch.register_type(
+    function conch.register_type<T>(
 		type: string,
 		data: {
-			converts: (any) -> any,
+			converts: (any) -> T,
 			analysis: AnalysisCommandArgument | AnalysisCommandVariadic
-			}
-		)
+		}
+	): (name: string?, description: string?) -> T
     ```
 
 - **Details**
 
-    Types must be registered before the command using them is registered.
+    Types must be registered on both the server and client before the command using them is registered.
 
 ### has_permissions()
 
@@ -110,7 +110,7 @@ Returns if the user has the required permissions to use a command.
 - **Type**
 
 	```luau
-	function conch.has_permissions(user: User, ...: string)
+	function conch.has_permissions(user: User, ...: string): boolean
 	```
 
 - **Details**

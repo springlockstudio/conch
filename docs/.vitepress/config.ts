@@ -46,6 +46,7 @@ export default defineConfig({
             { text: "Home", link: "/" },
             { text: "Resources", link: "/resources/getting-started/1-why/" },
             { text: "API", link: "/api/conch/"},
+			{ text: "Glossary", link: "/resources/glossary/" },
         ],
 
         sidebar: {
@@ -54,6 +55,7 @@ export default defineConfig({
 				{ text: "ui", link: "/api/ui/" },
             ],
             "/resources/": [
+				{ text: "Glossary", link: "/resources/glossary/" },
                 { text: "Getting Started", collapsed: false, items: [
                     { text: "Why", link: "/resources/getting-started/1-why/" },
                     { text: "Installation", link: "/resources/getting-started/2-installation/" },
@@ -63,6 +65,7 @@ export default defineConfig({
                 ] },
                 { text: "Concepts", collapsed: false, items: [
                 ] },
+				
             ]
         },
 

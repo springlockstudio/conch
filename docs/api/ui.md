@@ -33,7 +33,7 @@ Mounts the UI to the PlayerGui.
 
 ### opened()
 
-A vide source that stores if the UI is enbaled or not. When called with a boolean, sets it to that boolean. Otherwise, returns the currently stored boolean.
+A vide source that stores if the UI is enabled or not. When called with a boolean, sets it to that boolean. Otherwise, returns the currently stored boolean.
 
 - **Type**
 
