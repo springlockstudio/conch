@@ -1,6 +1,5 @@
 import { defineConfig } from "vitepress";
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-import { buildEndGenerateOpenGraphImages } from '@nolebase/vitepress-plugin-og-image/vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -18,15 +17,9 @@ export default defineConfig({
     cleanUrls: true,
 
     vite: {
-		optimizeDeps: { 
-			exclude: [ 
-			  '@nolebase/vitepress-plugin-inline-link-preview/client', 
-			], 
-		}, 
         ssr: {
             noExternal: [
                 '@nolebase/vitepress-plugin-highlight-targeted-heading',
-				'@nolebase/vitepress-plugin-inline-link-preview',
             ]
         }
     },
@@ -79,13 +72,6 @@ export default defineConfig({
         socialLinks: [
             { icon: "github", link: "https://github.com/alicesaidhi/conch" }
         ]
-    },
+    }
 
-	async buildEnd(siteConfig) {
-		const newBuilder = buildEndGenerateOpenGraphImages({
-			baseUrl: "https://alicesaidhi.github.io/conch/",
-		})
-
-		await newBuilder(siteConfig)
-	}
 })
