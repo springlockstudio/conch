@@ -93,6 +93,15 @@ return function()
 			end,
 			callback = print,
 		})
+
+		console.register_command("sleep", {
+			description = "Waits for a given amount of time before continuing execution",
+			arguments = function()
+				return arg.number("time", "The amount of time to sleep for")
+			end,
+			callback = task.wait,
+		})
+
 		console.register_quick("error", error)
 		console.register_quick("warn", warn)
 		console.register_quick("info", info)

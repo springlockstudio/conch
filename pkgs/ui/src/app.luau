@@ -2,7 +2,7 @@ local TextService = game:GetService "TextService"
 local UserInputService = game:GetService "UserInputService"
 
 local background = require "./components/background"
-local conch = require "../roblox_packages/conch_glue"
+local conch = require "../roblox_packages/conch"
 local corner = require "./components/corner"
 local flex = require "./components/flex"
 local gap = require "./components/gap"
@@ -10,6 +10,7 @@ local loading = require "./components/loading"
 local padding = require "./components/padding"
 local screen = require "./components/screen"
 local state = require "./state"
+local stroke = require "./components/stroke"
 local suggestion = require "./components/suggestion"
 local text = require "./components/text"
 local textbox = require "./components/textbox"
@@ -23,6 +24,7 @@ local show = vide.show
 local changed = vide.changed
 local effect = vide.effect
 local cleanup = vide.cleanup
+local indexes = vide.indexes
 
 local STARTUP_TEXT = [[
 Conch	0.2.0-rc.6
@@ -143,18 +145,82 @@ return function()
 		flex():fill("horizontal"):vertical "bottom",
 		padding { padding = 12 },
 
+		show(analysis, function()
+			return vide.create "Folder" {
+				suggestion {
+					x = function()
+						local t = string.split(before_text(), "\n")
+						return 10 * #t[#t] + 10
+					end,
+					y = function()
+						return suggestion_position().Y
+							+ absolute_position().Y
+							- 20
+					end,
+					selected = selected_suggestion,
+
+					analyzing = function() return analysis().analyzing end,
+					suggestions = function() return analysis().suggestions end,
+				},
+			}
+		end),
+
 		background {
-			height = 50,
+			auto = "Y",
+
+			flex(),
+			corner(4),
+			padding { y = 4 },
+
+			indexes(function()
+				local err = syntax_error()
+				local result = table.clone(analysis() and analysis().logs or {})
+				if err then
+					table.insert(result, { kind = "error", text = err })
+				end
+				return result
+			end, function(log, layout)
+				return text {
+					order = 0 - layout + 100,
+					height = 20,
+
+					text = function() return log().text end,
+					text_size = 16,
+					text_style = function() return log().kind end,
+					xalignment = Enum.TextXAlignment.Left,
+
+					padding { x = 8 },
+				}
+			end),
+
+			indexes(state.logs, function(log: () -> conch.Log, layout: number)
+				return text {
+					height = 20,
+					order = -layout - 1,
+
+					text = function() return log().text end,
+					text_size = 16,
+					text_style = function() return log().kind end,
+					xalignment = Enum.TextXAlignment.Left,
+
+					padding { x = 8 },
+				}
+			end),
+		},
+
+		gap { height = 4 },
+
+		background {
 			auto = Enum.AutomaticSize.Y,
-			layout = 1,
-			corner(6),
+			corner(4),
 
 			show(
 				working,
 				function()
 					return loading {
+						height = 18,
 						speed = 6,
-						text_size = 20,
+						text_size = 18,
 						xalignment = Enum.TextXAlignment.Left,
 					}
 				end,
@@ -180,7 +246,7 @@ return function()
 							raw_text(text)
 						end,
 						placeholder = "Enter your command",
-						text_size = 20,
+						text_size = 18,
 						xalignment = Enum.TextXAlignment.Left,
 						multiline = function()
 							if pending() then
@@ -225,91 +291,10 @@ return function()
 				end
 			),
 
-			padding { padding = 12 },
+			padding { x = 8, y = 8 },
 			flex():fill():vertical("center"):horizontal "left",
 
 			changed("AbsolutePosition", absolute_position),
 		},
-
-		show(analysis, function()
-			return vide.create "Folder" {
-				suggestion {
-					x = function()
-						local t = string.split(before_text(), "\n")
-						return 10 * #t[#t] + 10
-					end,
-					y = function()
-						return suggestion_position().Y
-							+ absolute_position().Y
-							- 20
-					end,
-					selected = selected_suggestion,
-
-					analyzing = function() return analysis().analyzing end,
-					suggestions = function() return analysis().suggestions end,
-				},
-			}
-		end),
-
-		values(function()
-			local err = syntax_error()
-			local result = table.clone(analysis() and analysis().logs or {})
-			if err then table.insert(result, { kind = "error", text = err }) end
-			return result
-		end, function(log, layout)
-			return background {
-				height = 24,
-				auto = Enum.AutomaticSize.Y,
-				layout = function() return -layout() - 1 end,
-				color = theme.background():Lerp(
-					if log.kind == "normal"
-						then theme.text()
-						elseif log.kind == "info" then theme.text_info()
-						elseif log.kind == "warn" then theme.text_warn()
-						elseif log.kind == "error" then theme.text_error()
-						else theme.text(),
-					0.1
-				),
-
-				flex():fill():vertical("center"):horizontal "left",
-				padding { x = 8, y = 3 },
-
-				text {
-					text = log.text,
-					text_size = 18,
-					text_style = log.kind,
-					xalignment = Enum.TextXAlignment.Left,
-				},
-			}
-		end),
-
-		gap { height = 4 },
-
-		values(state.logs, function(log: conch.Log, layout: () -> number)
-			return background {
-				height = 24,
-				auto = Enum.AutomaticSize.Y,
-				layout = function() return -layout() - 1 end,
-				color = theme.background():Lerp(
-					if log.kind == "normal"
-						then theme.text()
-						elseif log.kind == "info" then theme.text_info()
-						elseif log.kind == "warn" then theme.text_warn()
-						elseif log.kind == "error" then theme.text_error()
-						else theme.text(),
-					0.1
-				),
-
-				flex():fill():vertical("center"):horizontal "left",
-				padding { x = 8, y = 3 },
-
-				text {
-					text = log.text,
-					text_size = 18,
-					text_style = log.kind,
-					xalignment = Enum.TextXAlignment.Left,
-				},
-			}
-		end),
 	}
 end

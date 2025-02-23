@@ -81,9 +81,7 @@ local function parse(input: buffer, can_yield: boolean?)
 		local delim = peek()
 		local c = bump_peek()
 
-		while
-			c ~= delim and not eof("expected string to be finished at", pos)
-		do
+		while c ~= delim and not eof "unterminated string" do
 			if c == 0 or c == char "\n" or c == char "\r" then
 				has_error = true
 				return "error"
