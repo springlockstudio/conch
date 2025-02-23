@@ -371,7 +371,7 @@ end
 return {
 
 	any = console.register_type("any", anyT) :: G<any>,
-	string = console.register_type("strings", stringT) :: G<string>,
+	string = console.register_type("string", stringT) :: G<string>,
 	strings = console.register_type("strings", stringsT) :: G<{ string }>,
 	number = console.register_type("number", numberT) :: G<number>,
 	numbers = console.register_type("numbers", numbersT) :: G<{ number }>,
