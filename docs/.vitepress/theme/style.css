@@ -1,42 +1,19 @@
 @import "../../node_modules/vitepress-theme-api/dist/style.css";
 
 /**
- * Customize default theme styling by overriding CSS variables:
- * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
- */
-/**
- * Colors
- * -------------------------------------------------------------------------- */
-:root {
-  --vp-c-brand: #c7693a;
-  --vp-c-brand-light: #d2a58f;
-  --vp-c-brand-lighter: #d6a892;
-  --vp-c-brand-lightest: #e1b39d;
-  --vp-c-brand-dark: #c79b85;
-  --vp-c-brand-darker: #ca9175;
-  --vp-c-brand-dimm: rgba(100, 108, 255, 0.08);
-  --vp-font-family-mono: "JetBrains Mono" !important;
-}
-
-/**
- * Component: Button
- * -------------------------------------------------------------------------- */
-
-:root {
-  --vp-button-brand-border: var(--vp-c-brand-light);
-  --vp-button-brand-text: var(--vp-c-white);
-  --vp-button-brand-bg: var(--vp-c-brand);
-  --vp-button-brand-hover-border: var(--vp-c-brand-light);
-  --vp-button-brand-hover-text: var(--vp-c-white);
-  --vp-button-brand-hover-bg: var(--vp-c-brand-light);
-  --vp-button-brand-active-border: var(--vp-c-brand-light);
-  --vp-button-brand-active-text: var(--vp-c-white);
-  --vp-button-brand-active-bg: var(--vp-button-brand-bg);
-}
-
-/**
  * Component: Home
  * -------------------------------------------------------------------------- */
+
+.VPContent:has(.VPHome) {
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.VPHome > .vp-doc {
+	margin-top: 1rem
+}
 
 :root {
   --vp-home-hero-name-color: transparent;
@@ -125,4 +102,44 @@
 
 .grouping > ul > li > a {
   text-decoration: none !important;
+}
+
+/**
+  * Component Button
+  * -------------------------------------------------------------------------- */
+.VPButton {
+	border-radius: 4px !important
+}
+
+.DocSearch-Button {
+	border-radius: 4px !important
+}
+
+/**
+  * Component VPFeature
+  * -------------------------------------------------------------------------- */
+.VPFeature {
+	border-radius: 6px !important
+}
+
+/**
+  * Component Pager
+  * -------------------------------------------------------------------------- */
+.pager-link {
+	border-radius: 6px !important
+}
+
+
+/**
+  * Component Plugin
+  * -------------------------------------------------------------------------- */
+.plugin-tabs {
+	border-radius: 6px !important
+}
+
+/**
+  * Component Language
+  * -------------------------------------------------------------------------- */
+div[class*="language-"] {
+	border-radius: 6px !important;
 }

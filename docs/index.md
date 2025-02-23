@@ -23,7 +23,7 @@ hero:
       link: https://github.com/alicesaidhi/conch
 features:
   - title: Simple and easy-to-use
-    details: Provides a simple and easy to use API that supports any structure.
+    details: Provides a simple and easy to use API that supports any structure. 
   - title: Turing Complete
     details: A full-blown language with variables, analysis and control flow.
   - title: Modular
