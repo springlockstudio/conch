@@ -353,8 +353,8 @@ local function compile(
 			compile_expression(stat.expression)
 		end
 
-		local instruction: types.Instruction_IfNotNil =
-			{ kind = "jump_if_not_nil", index = 1, to = 0 }
+		local instruction: types.Instruction_If =
+			{ kind = "jump_if", index = 1, to = 0 }
 		INSERT(instruction)
 		local block_start = next_instruction
 

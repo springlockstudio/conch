@@ -6,8 +6,7 @@ local vm = require "../pkgs/vm/src/lib"
 
 local block
 
-local value =
-	ast "print test; t = { 1, 2 }; for (ipairs $t) |k, v| { print $k $v }; print done"
+local value = ast "while (false) { print test }"
 local vm_state = {}
 
 if value.status == "finished" then
