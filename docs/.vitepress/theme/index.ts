@@ -1,7 +1,7 @@
 import { h, onMounted, onUnmounted } from "vue";
-import {DividePage} from 'vitepress-theme-api';
+import { DividePage } from 'vitepress-theme-api';
 import { Theme } from "vitepress";
-import DefaultTheme from "vitepress/theme";
+import DefaultTheme, { VPButton } from "vitepress/theme";
 import {  
   NolebaseHighlightTargetedHeading
 } from '@nolebase/vitepress-plugin-highlight-targeted-heading/client'
@@ -21,6 +21,7 @@ export default {
   enhanceApp({ app, router, siteData }) {
     // ...
     app.component("DividePage", DividePage);
+	app.component("Button", VPButton)
     enhanceAppWithTabs(app);
   },
 } satisfies Theme;

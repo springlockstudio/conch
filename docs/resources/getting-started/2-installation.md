@@ -7,6 +7,10 @@ next:
     link: ./3-setting-up/
 ---
 
+<script setup>
+import { VPButton } from "vitepress/theme"
+</script>
+
 # Getting Started
 
 This goes over how to start setting up conch.
@@ -31,5 +35,14 @@ pesde add alicesaidhi/conch_ui
 ```
 
 ==rbxm
-Download the latest rbxm from Github Releases and add it to your Studio.
+You can download the latest rbxm from [GitHub Releases](https://github.com/alicesaidhi/conch/releases/latest/) or by pressing the button below. All packages expect to be within the same folder.
+
+For the `conch_ui` package, you also need vide to be installed within the same folder.
+
+<VPButton href="https://github.com/alicesaidhi/conch/releases/latest/download/packages.rbxm" text="Download latest rbxm"></VPButton>
+<VPButton href="https://github.com/centau/vide/releases/latest" text="Vide"></VPButton>
+
+You can drag the rbxm into Studio. You should place your packages somewhere where both the client and server can access it, ideally ReplicatedStorage. You should also place Vide in the same folder.
+
+![Image describing Conch within ReplicatedStorage](/image.png)
 :::
