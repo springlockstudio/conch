@@ -84,7 +84,6 @@ export default defineConfig({
 	async buildEnd(siteConfig) {
 		const newBuilder = buildEndGenerateOpenGraphImages({
 			baseUrl: "https://alicesaidhi.github.io/conch/",
-			templateSvgPath: "public/logo.svg"
 		})
 
 		await newBuilder(siteConfig)
