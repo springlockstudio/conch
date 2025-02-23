@@ -31,11 +31,15 @@ Conch	0.2.0-rc.6
 This work is made available under the MIT license. You can view the license by running `license`.]]
 
 return function()
-	local function output(log)
-		local logs = state.logs()
-		table.insert(logs, 1, log)
-		table.remove(logs, 100)
-		state.logs(logs)
+	local function output(values)
+		local s = string.split(values.text, "\n")
+
+		for idx, log in s do
+			local logs = state.logs()
+			table.insert(logs, 1, { kind = values.kind, text = log })
+			table.remove(logs, 100)
+			state.logs(logs)
+		end
 	end
 
 	conch.console.output = output
