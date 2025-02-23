@@ -16,7 +16,7 @@ Require on the server and run the following functions:
 ```luau
 local conch = require(path.to.conch)
 
-conch.initate_default_lifecycle()
+conch.initiate_default_lifecycle()
 ```
 
 ## Client Setup
