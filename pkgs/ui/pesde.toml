@@ -13,10 +13,6 @@ default = "https://github.com/daimond113/pesde-index"
 [wally_indices]
 default = "https://github.com/UpliftGames/wally-index"
 
-[scripts]
-roblox_sync_config_generator = ".pesde/roblox_sync_config_generator.luau"
-sourcemap_generator = ".pesde/sourcemap_generator.luau"
-
 [dependencies]
 vide = { wally = "wally#centau/vide", version = "^0.3.1" }
 ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "roblox" }

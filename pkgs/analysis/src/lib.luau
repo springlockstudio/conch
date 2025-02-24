@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-				| ast.Command
+																		| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -160,16 +160,20 @@ local function generate_analysis_info(
 
 			local arg_analyzed: AnalysisInformation = no_suggestions ""
 			for i, argument in stat.arguments do
-				if position_relative(argument.span) == "within" then
-					if argument.kind == "identifier" then
-						span = argument.span
-					end
+				local relative_position = position_relative(argument.span)
+				if relative_position == "within" then
+					span = argument.span
 					arg_analyzed =
 						process_expression(argument) :: AnalysisInformation
 					break
-				end
-				if position_relative(argument.span) == "after" then
+				elseif relative_position == "after" then
+					span = vector.create(
+						argument.span.y + 1,
+						argument.span.y + 1,
+						0
+					)
 					index += 1
+				elseif relative_position == "before" then
 					break
 				end
 			end
