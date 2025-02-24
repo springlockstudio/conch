@@ -1,5 +1,5 @@
 name = "alicesaidhi/conch_types"
-version = "0.2.0-rc.6"
+version = "0.2.0"
 
 [target]
 environment = "roblox"

@@ -1,5 +1,6 @@
 name = "alicesaidhi/conch_vm"
-version = "0.2.0-rc.6"
+version = "0.2.0"
+includes = ["src/*", "pesde.toml"]
 
 [target]
 environment = "roblox"

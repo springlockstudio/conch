@@ -1,6 +1,6 @@
 name = "alicesaidhi/conch_standalone"
-version = "0.2.0-rc.6"
-includes = ["src/**/*", "pesde.toml"]
+version = "0.2.0"
+includes = ["src/*", "pesde.toml"]
 private = true
 
 [target]

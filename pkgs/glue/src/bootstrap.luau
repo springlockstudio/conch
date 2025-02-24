@@ -33,38 +33,51 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.]]
 
+local function output(t: types.Log) console.console.output(t) end
+
+local function concat(...: string)
+	local t = { ... }
+	for i, v in t do
+		t[i] = tostring(v)
+	end
+	return table.concat(t, " ")
+end
+
+local function print(...)
+	local text = concat(...)
+	output { kind = "normal", text = text }
+end
+
+local function error(...)
+	local text = concat(...)
+	output { kind = "error", text = text }
+	error(text, 0)
+end
+
+local function warn(...)
+	local text = concat(...)
+	output { kind = "warn", text = text }
+end
+
+local function info(...)
+	local text = concat(...)
+	output { kind = "info", text = text }
+end
+
+if IS_CLIENT then
+	console.register_command("license", {
+		description = "Outputs the license to the console.",
+		permissions = {},
+		arguments = function() end,
+		callback = function()
+			for _, s in string.split(LICENSE, "\n") do
+				output { kind = "normal", text = s }
+			end
+		end,
+	})
+end
+
 return function()
-	local function output(t: types.Log) console.console.output(t) end
-
-	local function concat(...: string)
-		local t = { ... }
-		for i, v in t do
-			t[i] = tostring(v)
-		end
-		return table.concat(t, " ")
-	end
-
-	local function print(...)
-		local text = concat(...)
-		output { kind = "normal", text = text }
-	end
-
-	local function error(...)
-		local text = concat(...)
-		output { kind = "error", text = text }
-		error(text, 0)
-	end
-
-	local function warn(...)
-		local text = concat(...)
-		output { kind = "warn", text = text }
-	end
-
-	local function info(...)
-		local text = concat(...)
-		output { kind = "info", text = text }
-	end
-
 	local function internal()
 		print(
 			`CONCH INTERNAL INFORMATION - {if RunService:IsClient()
@@ -150,17 +163,6 @@ return function()
 					arg.any("value", "the value to set it to")
 			end,
 			callback = set,
-		})
-
-		console.register_command("license", {
-			description = "Outputs the license to the console.",
-			permissions = {},
-			arguments = function() end :: any,
-			callback = function()
-				for _, s in string.split(LICENSE, "\n") do
-					output { kind = "normal", text = s }
-				end
-			end,
 		})
 	end
 end
