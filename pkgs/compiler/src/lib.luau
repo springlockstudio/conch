@@ -304,28 +304,31 @@ local function compile(
 
 		if stat.expression.kind == "command" then
 			compile_command(stat.expression, 1)
+		else
+			compile_expression(stat.expression)
 		end
 
+		INSERT { kind = "turn-into-iterator" }
 		SET_VALUE "--iterator"
 		local start = next_instruction
 		loop_begins_at = start
 
 		GET_VALUE "--iterator"
-		INSERT { kind = "call", arguments = 0, results = arguments }
+		INSERT { kind = "call", arguments = 0, results = math.max(1, arguments) }
 
 		local instruction: types.Instruction_IfNotNil =
 			{ kind = "jump_if_not_nil", index = 1, to = 0 }
 		INSERT(instruction)
+
 		local block_start = next_instruction
 
-		local state = {}
 		for i, argument in stat.call.arguments do
 			SET_VALUE(argument.text)
 		end
+		INSERT { kind = "reset" }
 
 		compile_block(stat.call.block)
 
-		INSERT { kind = "reset" }
 		INSERT { kind = "goto", to = start }
 		instruction.to = next_instruction
 

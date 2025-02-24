@@ -44,6 +44,7 @@ local function create_vm()
 
 	local function GET(at: number)
 		if at < 0 then at = n + at + 1 end
+		if at > n then return nil end
 		return stack[at]
 	end
 
@@ -91,7 +92,7 @@ local function create_vm()
 				n = 0
 			end
 		elseif instruction.kind == "jump_if_not_nil" then
-			local value = stack[1]
+			local value = GET(1)
 			if value == nil then
 				instruction_at = instruction.to - 1
 				n = 0
@@ -169,13 +170,35 @@ local function create_vm()
 			locals[instruction.index] = POP()
 		elseif instruction.kind == "set_table" then
 			local v, k = POP(), POP()
-			local t = stack[n]
+			local t = GET(n)
 			t[k] = v
 		elseif instruction.kind == "return" then
 			LOG("stack", #stack, stack[1])
 			instruction_at = instruction_end
 		elseif instruction.kind == "reset" then
 			n = 0
+		elseif instruction.kind == "turn-into-iterator" then
+			local value = POP()
+
+			if typeof(value) == "table" then
+				local default_iterator = pairs
+				local mt = getmetatable(value)
+
+				if typeof(mt) == "table" then
+					default_iterator = mt.__iter or default_iterator
+				end
+
+				local fn = pairs(value)
+				local previous = {}
+
+				PUSH(function()
+					local t = { fn(value, unpack(previous)) }
+					previous = t
+					return unpack(t)
+				end)
+			else
+				PUSH(value)
+			end
 		end
 	end
 
