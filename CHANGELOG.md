@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add autofill through tab in UI
 - Add general iteration
 
+### Changes
+
+- Prevent textbox from capturing focus before the menu opens by @synpixel in https://github.com/alicesaidhi/conch/pull/12
+- Update UI to be more visually distinct
+
 ### Fixes
 
 - Fixed error in analysis when no arguments are provided
