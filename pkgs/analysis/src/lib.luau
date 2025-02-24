@@ -1,5 +1,5 @@
 local ast = require "./optional_ast"
-local types = require "../luau_packages/types"
+local types = require "../roblox_packages/types"
 
 type LogKind = types.LogKind
 type AnalysisSuggestion = types.AnalysisSuggestion
@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-			| ast.Command
+				| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier

@@ -1,5 +1,5 @@
 --!strict
-local types = require "../luau_packages/types"
+local types = require "../roblox_packages/types"
 
 export type TokenKindText = types.TokenKindText
 export type TokenKindRest = types.TokenKindRest

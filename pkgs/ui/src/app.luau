@@ -10,14 +10,12 @@ local loading = require "./components/loading"
 local padding = require "./components/padding"
 local screen = require "./components/screen"
 local state = require "./state"
-local stroke = require "./components/stroke"
 local suggestion = require "./components/suggestion"
 local text = require "./components/text"
 local textbox = require "./components/textbox"
 local theme = require "./theme"
 local vide = require "../roblox_packages/vide"
 
-local values = vide.values
 local source = vide.source
 local derive = vide.derive
 local show = vide.show
