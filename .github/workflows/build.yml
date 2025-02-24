@@ -19,12 +19,12 @@ jobs:
       - name: Setup Rokit
         uses: CompeyDev/setup-rokit@v0.1.2
 
-      - name: Run standalone compat release
+      - name: Install
         run: |
           pesde install
-          lune run standalone-compat-release
 
       - name: Build rbxm and release
         run: |
-          rojo build build.project.json -o packages.rbxm
-          gh release upload ${{github.event.release.tag_name}} packages.rbxm
+          cd pkgs/standalone
+          rojo build build.project.json -o standalone.rbxm
+          gh release upload ${{github.event.release.tag_name}} standalone.rbxm

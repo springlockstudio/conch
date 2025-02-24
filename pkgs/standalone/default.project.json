@@ -1,0 +1,18 @@
+{
+	"name": "conch_standalone",
+	"tree": {
+		"$path": "main.luau",
+
+		"lib": {
+			"$path": "lib.luau"
+		},
+
+		"roblox_packages": {
+			"$path": "roblox_packages"
+		},
+
+		"luau_packages": {
+			"$path": "luau_packages"
+		}
+	}
+}
