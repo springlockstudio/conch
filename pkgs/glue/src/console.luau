@@ -72,6 +72,7 @@ local function replicate_to_player(
 
 	net.server.fire_register_command(player, {
 		name = representation.name,
+		description = representation.description,
 		permissions = representation.permissions,
 		arguments = representation.arguments,
 	})
@@ -152,6 +153,7 @@ local function register_command<T...>(
 
 	local representation: types.CommandRepresentation = {
 		name = name,
+		description = info.description,
 		permissions = info.permissions,
 		arguments = arguments,
 		type_info = {
