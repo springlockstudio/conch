@@ -22,8 +22,8 @@ This goes over how to start setting up conch.
 In your `wally.toml`, add the following lines to your dependencies.
 
 ```toml
-conch = "alicesaidhi/conch@0.2.0"
-conch_ui = "alicesaidhi/conch-ui@0.2.1"
+conch = "alicesaidhi/conch@0.2.2"
+conch_ui = "alicesaidhi/conch-ui@0.2.2"
 ```
 
 ==pesde
