@@ -243,11 +243,7 @@ end
 --[=[
 Generates a new enum that can be passed to conch.register_type
 ]=]
-local function generate_enum<T>(
-	options: { T },
-	name: string?,
-	description: string?
-)
+local function enum_new<T>(options: { T }, name: string?, description: string?)
 	local map = {}
 
 	for _, value in options do
