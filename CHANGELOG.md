@@ -6,7 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
-## Unreleased
+## 0.2.2 conch & conch-ui - 2025-02-25
+
+### Changes
+
+- Remove patch version specifier from conch-ui startup message
+
+### Fixed
+
+- Fix accidental renaming of `enum_new`
+
+## 0.2.1 conch & conch-ui - 2025-02-25
 
 ### Added
 

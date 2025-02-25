@@ -25,7 +25,7 @@ local cleanup = vide.cleanup
 local indexes = vide.indexes
 
 local STARTUP_TEXT = [[
-Conch 0.2.0
+Conch 0.2.x
 Copyright (c) alicesays_hallo - This project is licensed under MIT, you can view the included license with `license`]]
 
 return function()
