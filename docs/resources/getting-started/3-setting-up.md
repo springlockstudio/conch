@@ -1,12 +1,3 @@
----
-prev:
-    text: Installation
-    link: ./2-installation/
-next:
-    text: Permissions
-    link: ./4-permissions/
----
-
 # Setting Up
 
 ## Server Setup
