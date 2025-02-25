@@ -3,8 +3,8 @@ prev:
     text: Installation
     link: ./2-installation/
 next:
-    text: Transactions
-    link: ../advanced-concepts/transactions/
+    text: Permissions
+    link: ./4-permissions/
 ---
 
 # Setting Up
