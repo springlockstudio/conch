@@ -184,7 +184,7 @@ local vectorT = {
 local vectorsT = {
 	convert = function(
 		value: vector | Vector3 | { vector | Vector3 | { number } }
-	)
+	): { vector }
 		if type(value) == "vector" then
 			return { value }
 		elseif typeof(value) == "table" then
@@ -205,13 +205,16 @@ local vectorsT = {
 	},
 }
 
+--[=[
+Generates a new enum that can be passed to conch.register_type. It maps each string in a table to a specific value.
+]=]
 local function enum_map<V>(
 	map: { [string]: V },
 	name: string?,
 	description: string?
 )
 	return {
-		convert = function(value)
+		convert = function(value): V
 			local key = tostring(value)
 			if map[key] == nil then error(`{key} is not valid`, 0) end
 			return map[key]
@@ -237,7 +240,14 @@ local function enum_map<V>(
 	}
 end
 
-local function enum_new<T>(options: { T }, name: string?, description: string?): T
+--[=[
+Generates a new enum that can be passed to conch.register_type
+]=]
+local function generate_enum<T>(
+	options: { T },
+	name: string?,
+	description: string?
+)
 	local map = {}
 
 	for _, value in options do

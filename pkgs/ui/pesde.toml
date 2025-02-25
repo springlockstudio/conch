@@ -1,6 +1,6 @@
 name = "alicesaidhi/conch_ui"
-version = "0.2.0"
-includes = ["src/*", "pesde.toml"]
+version = "0.2.1"
+includes = ["src/**", "pesde.toml"]
 
 [target]
 environment = "roblox"
