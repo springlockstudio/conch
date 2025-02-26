@@ -62,6 +62,13 @@ Contains types for Conch's parser, analysis, compiler and vm.
 
 </div>
 
+<div class="grouping">
+
+## conch_standalone
+
+Exclusive to the rbxm install of conch, conch_standalone bundles conch so that it's all self-contained. It inherits conch, but adds the ui part of conch under `conch.ui`.
+
+</div>
 
 <div class="grouping">
 
