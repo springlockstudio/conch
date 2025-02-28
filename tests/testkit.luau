@@ -348,8 +348,7 @@ local function BENCH(name: string, fn: () -> ())
 	assert(not active, "a benchmark is already in progress")
 
 	bench = {}
-	assert(bench)
-;
+	assert(bench);
 	(collectgarbage :: any) "collect"
 
 	local mem_start = gcinfo()
