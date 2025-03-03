@@ -194,7 +194,7 @@ return {
 			callback(player, log)
 		end)
 
-		return connection
+		return function() connection:Disconnect() end
 	end,
 	on_command_run = function(callback: (types.AfterCommandRunContext) -> ())
 		local connection =
