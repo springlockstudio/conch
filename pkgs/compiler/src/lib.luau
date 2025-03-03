@@ -322,7 +322,8 @@ local function compile(
 
 		local block_start = next_instruction
 
-		for i, argument in stat.call.arguments do
+		for i = #stat.call.arguments, 1, -1 do
+			local argument = stat.call.arguments[i]
 			SET_VALUE(argument.text)
 		end
 		INSERT { kind = "reset" }

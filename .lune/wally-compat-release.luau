@@ -124,6 +124,9 @@ lib/
 	init.luau
 
 ]]
+
+local scanned_tomls: { [string]: PesdeToml } = {}
+
 local function fix(name: string) return string.gsub(name, "_", "-") end
 
 local function generate_wally_release_files(path: string)
@@ -263,8 +266,13 @@ local function generate_wally_release_files(path: string)
 				elseif dependency.name then
 					error "pesde dependency detected"
 				elseif dependency.workspace then
+					local dependency_toml = scanned_tomls[dependency.workspace]
+					assert(
+						dependency_toml,
+						`unable to find toml for {dependency.workspace}`
+					)
 					dependencies[name] =
-						`{fix(dependency.workspace)}@{pesde_toml.version}`
+						`{fix(dependency.workspace)}@{dependency_toml.version}`
 				elseif dependency.repo then
 					error "git dependency detected"
 				end
@@ -388,14 +396,20 @@ local function cleanup_files(path: string)
 end
 
 for _, path in get_order() do
+	local file = fs.readFile(path .. "/pesde.toml")
+	local pesde_toml: PesdeToml = serde.decode("toml", file)
+	scanned_tomls[pesde_toml.name] = pesde_toml
+end
+
+for _, path in get_order() do
 	print("Generating release for", path)
 	generate_wally_release_files(path)
-	local status = process.spawn("wally", { "publish" }, {
-		cwd = path,
-		env = {},
-		shell = true,
-	})
+	-- local status = process.spawn("wally", { "publish" }, {
+	-- 	cwd = path,
+	-- 	env = {},
+	-- 	shell = true,
+	-- })
 
-	cleanup_files(path)
-	if status.ok == false then error(status.stderr) end
+	-- cleanup_files(path)
+	-- if status.ok == false then error(status.stderr) end
 end
