@@ -139,6 +139,7 @@ return function()
 		end
 	end))
 
+	local next_cursor_position = false
 	return screen {
 		name = "Command Executor",
 		display_order = 100_000,
@@ -230,11 +231,10 @@ return function()
 					return textbox {
 						text = raw_text,
 						update_text = function(text: string)
-							local at = string.sub(
-								text,
-								cursor_position() - 1,
-								cursor_position() - 1
-							)
+							local position = next_cursor_position
+								or cursor_position()
+							local at =
+								string.sub(text, position - 1, position - 1)
 							local suggestion = analysis().suggestions
 
 							if at == "\t" and suggestion[1] then
@@ -274,7 +274,6 @@ return function()
 							end
 
 							if pending().status ~= "pending" then
-								local tree = pending()
 								working(true)
 								pending(nil)
 								conch.execute(value)
@@ -287,7 +286,19 @@ return function()
 
 						{
 							CursorPosition = cursor_position,
-							changed("CursorPosition", cursor_position),
+							changed("CursorPosition", function(new)
+								-- note: reimplement deferred behavior so that this doesn't freak out in immediate mode.
+								if next_cursor_position then
+									next_cursor_position = new
+									return
+								end
+
+								next_cursor_position = new
+								task.defer(function()
+									cursor_position(next_cursor_position)
+									next_cursor_position = false
+								end)
+							end),
 						},
 					}
 				end

@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
+## UNRELEASED conch-ui
+
+### Fixed
+
+- Fix issue with cursor going behind while typing in immediate mode
+
 ## UNRELEASED conch
+
+### Added
 
 - Add `conch.on_execution` as a callback that executes after a command completes
 - Add `conch.on_command_run` as a callback that executes after a command completes
