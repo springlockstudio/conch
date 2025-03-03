@@ -39,6 +39,7 @@ export type CommandContext = {
 
 export type AfterCommandRunContext = {
 	ok: boolean,
+	who: User,
 	command: string,
 	arguments: { unknown },
 	result: { unknown },

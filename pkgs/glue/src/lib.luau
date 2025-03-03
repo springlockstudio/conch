@@ -177,6 +177,8 @@ return {
 		assert(IS_CLIENT, "cannot run commands outside of the client")
 		assert(local_user, "unable to run commands without a local user")
 
+		if IS_CLIENT then net.client.fire_log_command(text) end
+
 		local pop = create_command_context(local_user :: types.User, false)
 		local ok, err = pcall(console.execute, text)
 		if not ok then console.console.output { kind = "error", text = err } end
@@ -185,9 +187,16 @@ return {
 
 	register_quick = console.register_quick,
 	register = console.register_command,
-	after_command_run = function(callback: (
-		types.AfterCommandRunContext
-	) -> () -> ())
+
+	on_execution = function(callback: (Player: Player, src: string) -> ())
+		local connection = net.server.on_log_command(function(player, log)
+			if typeof(log) ~= "string" then player:Kick() end
+			callback(player, log)
+		end)
+
+		return connection
+	end,
+	on_command_run = function(callback: (types.AfterCommandRunContext) -> ())
 		local connection =
 			console.after_command_run:connect(callback :: (...any) -> ())
 		return function() connection:disconnect() end

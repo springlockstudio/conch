@@ -56,7 +56,10 @@ export type RemoteIndex = {
 	update_role_permissions: RemoteEvent,
 	register_command: RemoteEvent,
 	log: RemoteEvent,
+	log_command: RemoteEvent,
 }
+
+export type LogExecutionPacket = string
 
 local run_context: "server" | "client" = if RunService:IsServer()
 	then "server"
@@ -102,6 +105,7 @@ function net.server.init()
 		update_role_permissions = remote "update_role_permissions",
 		register_command = remote "register_command",
 		log = remote "log",
+		log_command = remote "log_command",
 	}
 
 	remotes = remote_index
@@ -125,6 +129,7 @@ function net.client.init()
 		update_role_permissions = remote "update_role_permissions",
 		register_command = remote "register_command",
 		log = remote "log",
+		log_command = remote "log_command",
 	}
 
 	remotes = remote_index
@@ -143,9 +148,11 @@ function net.client.on_user_roles_update(
 	remotes.update_user_roles.OnClientEvent:Connect(callback :: any)
 end
 
-function net.client.on_command_registered(callback: (
-	info: RegisterCommandPacket
-) -> ())
+function net.client.on_command_registered(
+	callback: (
+		info: RegisterCommandPacket
+	) -> ()
+)
 	assert(net.client.initialized, "client not initialized")
 	assert_run_context "client"
 
@@ -197,6 +204,20 @@ function net.client.on_invoke_reply(callback: (info: InvokeReplyPacket) -> ())
 	assert_run_context "client"
 
 	remotes.invoke_server_command.OnClientEvent:Connect(callback :: any)
+end
+
+function net.client.fire_log_command(src: string)
+	assert(net.client.initialized, "client not initialized")
+	assert_run_context "client"
+
+	remotes.log_command:FireServer(src)
+end
+
+function net.server.on_log_command(fn: (Player, log: string) -> ())
+	assert(net.server.initialized, "server not initialized")
+	assert_run_context "server"
+
+	return remotes.log_command.OnServerEvent:Connect(fn :: any)
 end
 
 function net.server.fire_log(player: Player, info: LogPacket)

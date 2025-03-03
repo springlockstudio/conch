@@ -200,8 +200,11 @@ local function register_command<T...>(
 		local results = { pcall(info.callback, unpack(custom)) }
 		local ok = table.remove(results, 1)
 
+		local context = state.command_context[coroutine.running()]
+
 		after_run:fire {
 			ok = ok,
+			who = context and context.executor,
 			command = name,
 			arguments = custom,
 			result = results,
