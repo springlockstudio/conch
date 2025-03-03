@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
+## UNRELEASED conch
+
+- Add `conch.after_command_run` as a callback that executes after a command completes
+
+--------------------------------------------------------------------------------
+
 ## 0.2.2 conch & conch-ui - 2025-02-25
 
 ### Changes
@@ -16,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix accidental renaming of `enum_new`
 
+--------------------------------------------------------------------------------
+
 ## 0.2.1 conch & conch-ui - 2025-02-25
 
 ### Added
@@ -25,6 +33,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix components not being included inside pesde
+
+--------------------------------------------------------------------------------
 
 ## [0.2.0] - 2025-02-24
 
