@@ -4,8 +4,9 @@ local source = vide.source
 
 return {
 
-	background = source(Color3.fromHex "#1a1a1a"),
-	background_transparency = source(0.5),
+	background = source(Color3.fromHex "#0d181b"),
+	background_transparency = source(0.2),
+	stroke = source(Color3.fromHex "2e5053"),
 
 	text = source(Color3.fromHex "#eeeeee"),
 	text_error = source(Color3.fromHex "#f76b6e"),

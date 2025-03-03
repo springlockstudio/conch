@@ -1,9 +1,9 @@
 name = "alicesaidhi/conch_analysis"
-version = "0.2.0-rc.3"
-includes = ["src/**/*", "pesde.toml"]
+version = "0.2.0"
+includes = ["src/*", "pesde.toml"]
 
 [target]
-environment = "luau"
+environment = "roblox"
 lib = "src/lib.luau"
 build_files = ["src"]
 

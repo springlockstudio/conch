@@ -6,7 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
-## [Unreleased]
+## UNRELEASED conch
+
+- Add `conch.after_command_run` as a callback that executes after a command completes
+
+--------------------------------------------------------------------------------
+
+## 0.2.2 conch & conch-ui - 2025-02-25
+
+### Changes
+
+- Remove patch version specifier from conch-ui startup message
+
+### Fixed
+
+- Fix accidental renaming of `enum_new`
+
+--------------------------------------------------------------------------------
+
+## 0.2.1 conch & conch-ui - 2025-02-25
+
+### Added
+
+- Add replication for the command description from the server
+
+### Fixed
+
+- Fix components not being included inside pesde
+
+--------------------------------------------------------------------------------
+
+## [0.2.0] - 2025-02-24
 
 ### Added
 
@@ -17,13 +47,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `license` as a default command
 - Add `ui.bind_to` and `ui.mount` to bind opening to an input and mount the ui.
 - Add `glue.set_var`
-- Add `glue.after_command_run` as a callback that executes after a command completes
+- Add analysis for variables
+- Add vector syntax as `[x, y, z]`
+- Add autofill through tab in UI
+- Add general iteration
+
+### Changes
+
+- Prevent textbox from capturing focus before the menu opens by @synpixel in https://github.com/alicesaidhi/conch/pull/12
+- Update UI to be more visually distinct
 
 ### Fixes
 
 - Fixed error in analysis when no arguments are provided
 - Fix positioning of suggestions
 - Fix lune release script for Wally
+- Fix for loops
 
 --------------------------------------------------------------------------------
 

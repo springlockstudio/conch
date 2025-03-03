@@ -36,6 +36,7 @@ end
 local function register_command(data: net.RegisterCommandPacket)
 	-- warn("NEW SERVER COMMAND", data.name)
 	console.register_command(data.name, {
+		description = data.description :: string?,
 		permissions = data.permissions,
 		arguments = function() return unpack(data.arguments) end :: any,
 

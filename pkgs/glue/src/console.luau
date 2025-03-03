@@ -1,11 +1,11 @@
 local Players = game:GetService "Players"
 local RunService = game:GetService "RunService"
 
-local ast = require "../luau_packages/ast"
-local compiler = require "../luau_packages/compiler"
-local create_vm = require "../luau_packages/vm"
-local ctypes = require "../luau_packages/types"
-local intel = require "../luau_packages/intel"
+local ast = require "../roblox_packages/ast"
+local compiler = require "../roblox_packages/compiler"
+local create_vm = require "../roblox_packages/vm"
+local ctypes = require "../roblox_packages/types"
+local intel = require "../roblox_packages/intel"
 local net = require "./net"
 local signal = require "./signal"
 local state = require "./state"
@@ -27,15 +27,24 @@ local console: types.Console = {
 
 local types = {}
 
-local function register_type(
+local function register_type<T>(
 	type: string,
 	data: {
-		convert: (any) -> any,
+		convert: (any) -> T,
 		analysis: ctypes.AnalysisCommandArgument
 			| ctypes.AnalysisCommandVariadic,
 	}
 )
 	types[type] = data
+
+	return function(name: string?, description: string?): T
+		return {
+			name = name,
+			description = description,
+			kind = "arg",
+			type = type,
+		} :: any
+	end
 end
 
 local function write_global(global: string, value: any)
@@ -65,6 +74,7 @@ local function replicate_to_player(
 
 	net.server.fire_register_command(player, {
 		name = representation.name,
+		description = representation.description,
 		permissions = representation.permissions,
 		arguments = representation.arguments,
 	})
@@ -145,6 +155,7 @@ local function register_command<T...>(
 
 	local representation: types.CommandRepresentation = {
 		name = name,
+		description = info.description,
 		permissions = info.permissions,
 		arguments = arguments,
 		type_info = {

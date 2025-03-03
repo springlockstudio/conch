@@ -1,10 +1,13 @@
 **/luau_packages/
+**/lune_packages/
 **/roblox_packages/
 **/packages
 **/pesde.lock
 **/network/server.luau
 **/network/client.luau
 **/dist
+**/default.project.json
+!pkgs/standalone/default.project.json
 
 /out
 /local
@@ -12,3 +15,7 @@
 
 /docs/node_modules/
 /docs/.vitepress/cache
+
+**/sourcemap.json
+
+**.rbxm

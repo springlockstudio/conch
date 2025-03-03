@@ -1,7 +1,8 @@
 local TextService = game:GetService "TextService"
+local UserInputService = game:GetService "UserInputService"
 
 local background = require "./components/background"
-local conch = require "../roblox_packages/conch_glue"
+local conch = require "../roblox_packages/conch"
 local corner = require "./components/corner"
 local flex = require "./components/flex"
 local gap = require "./components/gap"
@@ -15,23 +16,28 @@ local textbox = require "./components/textbox"
 local theme = require "./theme"
 local vide = require "../roblox_packages/vide"
 
-local values = vide.values
 local source = vide.source
 local derive = vide.derive
 local show = vide.show
 local changed = vide.changed
 local effect = vide.effect
+local cleanup = vide.cleanup
+local indexes = vide.indexes
 
 local STARTUP_TEXT = [[
-Conch	0.2.0-rc.3
-This work is made available under the MIT license. You can view the license by running `license`.]]
+Conch 0.2.x
+Copyright (c) alicesays_hallo - This project is licensed under MIT, you can view the included license with `license`]]
 
 return function()
-	local function output(log)
-		local logs = state.logs()
-		table.insert(logs, 1, log)
-		table.remove(logs, 100)
-		state.logs(logs)
+	local function output(values)
+		local s = string.split(values.text, "\n")
+
+		for idx, log in s do
+			local logs = state.logs()
+			table.insert(logs, 1, { kind = values.kind, text = log })
+			table.remove(logs, 100)
+			state.logs(logs)
+		end
 	end
 
 	conch.console.output = output
@@ -49,7 +55,6 @@ return function()
 
 	local raw_text = source ""
 	local working = source(false)
-	local focused = source(true)
 	local cursor_position = source(0)
 	local absolute_position = source(Vector2.zero)
 	local pending = source()
@@ -67,10 +72,31 @@ return function()
 		return if status.status == "error" then status.why else nil
 	end)
 
-	local analysis = derive(function()
-		local result = conch.analyze(input(), cursor_position() - 1)
+	local analysis = source(conch.analyze("", 0))
+	local selected_suggestion = source(1)
 
-		return result
+	effect(
+		function()
+			selected_suggestion(
+				math.clamp(
+					selected_suggestion(),
+					1,
+					math.max(1, #analysis().suggestions)
+				)
+			)
+		end
+	)
+
+	local deferred = false
+	effect(function()
+		raw_text()
+		cursor_position()
+		if deferred then return end
+		deferred = true
+		task.defer(function()
+			deferred = false
+			analysis(conch.analyze(raw_text(), cursor_position() - 1))
+		end)
 	end)
 
 	local before_text = derive(
@@ -95,6 +121,24 @@ return function()
 		end)
 	end)
 
+	local function autofill(text: string, span: vector, with: string)
+		local before = string.sub(text, 1, span.x)
+		local after = string.sub(text, span.y + 1, -1)
+
+		task.defer(cursor_position, span.x + #with + 2)
+		return before .. with .. " " .. after
+	end
+
+	cleanup(UserInputService.InputBegan:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.Down then
+			selected_suggestion(
+				math.min(selected_suggestion() + 1, #analysis().suggestions)
+			)
+		elseif input.KeyCode == Enum.KeyCode.Up then
+			selected_suggestion(math.max(1, selected_suggestion() - 1))
+		end
+	end))
+
 	return screen {
 		name = "Command Executor",
 		display_order = 100_000,
@@ -103,27 +147,108 @@ return function()
 		flex():fill("horizontal"):vertical "bottom",
 		padding { padding = 12 },
 
+		show(analysis, function()
+			return vide.create "Folder" {
+				suggestion {
+					x = function()
+						local t = string.split(before_text(), "\n")
+						return 10 * #t[#t] + 10
+					end,
+					y = function()
+						return suggestion_position().Y
+							+ absolute_position().Y
+							- 20
+					end,
+					selected = selected_suggestion,
+
+					analyzing = function() return analysis().analyzing end,
+					suggestions = function() return analysis().suggestions end,
+				},
+			}
+		end),
+
 		background {
-			height = 50,
+			auto = "Y",
+
+			flex(),
+			corner(4),
+			padding { y = 4 },
+
+			indexes(function()
+				local err = syntax_error()
+				local result = table.clone(analysis() and analysis().logs or {})
+				if err then
+					table.insert(result, { kind = "error", text = err })
+				end
+				return result
+			end, function(log, layout)
+				return text {
+					order = 0 - layout + 100,
+					height = 20,
+
+					text = function() return log().text end,
+					text_size = 16,
+					text_style = function() return log().kind end,
+					xalignment = Enum.TextXAlignment.Left,
+
+					padding { x = 8 },
+				}
+			end),
+
+			indexes(state.logs, function(log: () -> conch.Log, layout: number)
+				return text {
+					height = 20,
+					order = -layout - 1,
+
+					text = function() return log().text end,
+					text_size = 16,
+					text_style = function() return log().kind end,
+					xalignment = Enum.TextXAlignment.Left,
+
+					padding { x = 8 },
+				}
+			end),
+		},
+
+		gap { height = 4 },
+
+		background {
 			auto = Enum.AutomaticSize.Y,
-			layout = 1,
-			corner(6),
+			corner(4),
 
 			show(
 				working,
 				function()
 					return loading {
+						height = 18,
 						speed = 6,
-						text_size = 20,
+						text_size = 18,
 						xalignment = Enum.TextXAlignment.Left,
 					}
 				end,
 				function()
 					return textbox {
 						text = raw_text,
-						update_text = raw_text,
+						update_text = function(text: string)
+							local at = string.sub(
+								text,
+								cursor_position() - 1,
+								cursor_position() - 1
+							)
+							local suggestion = analysis().suggestions
+
+							if at == "\t" and suggestion[1] then
+								text = autofill(
+									raw_text(),
+									suggestion[selected_suggestion()].replace,
+									suggestion[selected_suggestion()].with
+								)
+							end
+
+							raw_text(text)
+						end,
 						placeholder = "Enter your command",
-						text_size = 20,
+						text_size = 18,
 						xalignment = Enum.TextXAlignment.Left,
 						multiline = function()
 							if pending() then
@@ -140,7 +265,7 @@ return function()
 
 						enter = function(value)
 							raw_text ""
-							focused(true)
+							state.focused(true)
 
 							if pending() then
 								pending(pending().append(value))
@@ -157,8 +282,8 @@ return function()
 							end
 						end,
 
-						focused = focused,
-						update_focused = focused,
+						focused = state.focused,
+						update_focused = state.focused,
 
 						{
 							CursorPosition = cursor_position,
@@ -168,90 +293,10 @@ return function()
 				end
 			),
 
-			padding { padding = 12 },
+			padding { x = 8, y = 8 },
 			flex():fill():vertical("center"):horizontal "left",
 
 			changed("AbsolutePosition", absolute_position),
 		},
-
-		show(analysis, function()
-			return vide.create "Folder" {
-				suggestion {
-					x = function()
-						local t = string.split(before_text(), "\n")
-						return 10 * #t[#t] + 10
-					end,
-					y = function()
-						return suggestion_position().Y
-							+ absolute_position().Y
-							- 20
-					end,
-
-					analyzing = function() return analysis().analyzing end,
-					suggestions = function() return analysis().suggestions end,
-				},
-			}
-		end),
-
-		values(function()
-			local err = syntax_error()
-			local result = table.clone(analysis() and analysis().logs or {})
-			if err then table.insert(result, { kind = "error", text = err }) end
-			return result
-		end, function(log, layout)
-			return background {
-				height = 24,
-				auto = Enum.AutomaticSize.Y,
-				layout = function() return -layout() - 1 end,
-				color = theme.background():Lerp(
-					if log.kind == "normal"
-						then theme.text()
-						elseif log.kind == "info" then theme.text_info()
-						elseif log.kind == "warn" then theme.text_warn()
-						elseif log.kind == "error" then theme.text_error()
-						else theme.text(),
-					0.1
-				),
-
-				flex():fill():vertical("center"):horizontal "left",
-				padding { x = 8, y = 3 },
-
-				text {
-					text = log.text,
-					text_size = 18,
-					text_style = log.kind,
-					xalignment = Enum.TextXAlignment.Left,
-				},
-			}
-		end),
-
-		gap { height = 4 },
-
-		values(state.logs, function(log: conch.Log, layout: () -> number)
-			return background {
-				height = 24,
-				auto = Enum.AutomaticSize.Y,
-				layout = function() return -layout() - 1 end,
-				color = theme.background():Lerp(
-					if log.kind == "normal"
-						then theme.text()
-						elseif log.kind == "info" then theme.text_info()
-						elseif log.kind == "warn" then theme.text_warn()
-						elseif log.kind == "error" then theme.text_error()
-						else theme.text(),
-					0.1
-				),
-
-				flex():fill():vertical("center"):horizontal "left",
-				padding { x = 8, y = 3 },
-
-				text {
-					text = log.text,
-					text_size = 18,
-					text_style = log.kind,
-					xalignment = Enum.TextXAlignment.Left,
-				},
-			}
-		end),
 	}
 end

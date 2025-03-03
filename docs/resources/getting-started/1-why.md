@@ -1,8 +1,4 @@
 ---
-prev: false
-next:
-    text: Installation
-    link: ./2-installation/
 ---
 
 # Why

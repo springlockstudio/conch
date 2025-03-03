@@ -1,5 +1,5 @@
 name = "alicesaidhi/conch"
-version = "0.2.0-rc.3"
+version = "0.1.0"
 description = "Modern command library for Roblox"
 authors = ["alicesaidhi"]
 repository = "https://github.com/alicesaidhi/conch"
@@ -10,12 +10,13 @@ workspace_members = ["pkgs/*"]
 [target]
 environment = "roblox"
 
-[scripts]
-roblox_sync_config_generator = ".pesde/roblox_sync_config_generator.luau"
-sourcemap_generator = ".pesde/sourcemap_generator.luau"
-
 [indices]
-default = "https://github.com/daimond113/pesde-index"
+default = "https://github.com/pesde-pkg/index"
 
-[wally_indices]
-default = "https://github.com/UpliftGames/wally-index"
+[scripts]
+roblox_sync_config_generator = ".pesde/scripts/roblox_sync_config_generator.luau"
+sourcemap_generator = ".pesde/scripts/sourcemap_generator.luau"
+
+[dev_dependencies]
+scripts = { name = "pesde/scripts_rojo", version = "^0.1.0", target = "lune" }
+rojo = { name = "pesde/rojo", version = "^7.4.4", target = "lune" }

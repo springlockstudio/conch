@@ -1,6 +1,5 @@
 {
   "luau-lsp.fflags.enableNewSolver": true,
-  "luau-lsp.sourcemap.enabled": false,
   "editor.detectIndentation": false,
   "editor.insertSpaces": false,
   "files.exclude": {

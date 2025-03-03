@@ -1,5 +1,5 @@
 --!strict
-local types = require "../luau_packages/types"
+local types = require "../roblox_packages/types"
 
 export type TokenKindText = types.TokenKindText
 export type TokenKindRest = types.TokenKindRest
@@ -81,9 +81,7 @@ local function parse(input: buffer, can_yield: boolean?)
 		local delim = peek()
 		local c = bump_peek()
 
-		while
-			c ~= delim and not eof("expected string to be finished at", pos)
-		do
+		while c ~= delim and not eof "unterminated string" do
 			if c == 0 or c == char "\n" or c == char "\r" then
 				has_error = true
 				return "error"
@@ -437,7 +435,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				expr = expr,
 			}
 		else
-			return report(`invalid root {display(current_token)}`)
+			return report(`expected identifier, got {display(lookahead_token)}`)
 		end
 	end
 
@@ -475,7 +473,9 @@ local function parse(input: buffer, can_yield: boolean?)
 
 	function parse_var(): types.Var
 		local root = parse_var_root()
-		local suffixes = parse_var_suffixes()
+		local suffixes = if root.kind ~= "global"
+			then parse_var_suffixes()
+			else {} :: never
 
 		local start = root.span.x
 		local finish = if #suffixes > 0
@@ -581,6 +581,29 @@ local function parse(input: buffer, can_yield: boolean?)
 		return { fields = fields, span = vector.create(start, finish, 0) }
 	end
 
+	function parse_vector(): types.Expression_Vector
+		local from = expect "["
+
+		local values = {}
+
+		local n = 0
+		while n < 3 and not current_is "]" do
+			if n ~= 0 then expect "," end
+			n += 1
+
+			local expression = parse_expression()
+			values[n] = expression
+		end
+
+		local upto = expect "]"
+
+		return {
+			kind = "vector",
+			span = vector.create(from.span.x, upto.span.y, 0),
+			contents = values,
+		}
+	end
+
 	function parse_expression(): types.Expression
 		if current_is "$" and lookahead_is "(" then
 			-- nested call
@@ -599,7 +622,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				body = expr,
 				span = vector.create(start, finish, 0),
 			} :: any
-		elseif current_is "$" and lookahead_is "identifier" then
+		elseif current_is "$" then
 			-- variable
 			local var = parse_var()
 			return { kind = "var", var = var, span = var.span }
@@ -651,11 +674,13 @@ local function parse(input: buffer, can_yield: boolean?)
 		elseif current_is "{" then
 			local t = parse_table()
 			return { kind = "table", table = t, span = t.span }
+		elseif current_is "[" then
+			return parse_vector()
 		elseif current_kind == "eof" and can_yield then
 			yield()
 			return parse_expression()
 		else
-			return report(`expected something, got {current_kind}`)
+			return report(`expected expression, got {current_kind}`)
 		end
 	end
 
@@ -675,6 +700,7 @@ local function parse(input: buffer, can_yield: boolean?)
 				or current_is "identifier"
 				or current_is "{"
 				or current_is "|"
+				or current_is "["
 			)
 		do
 			local expression = parse_expression()

@@ -8,6 +8,7 @@ type Can<T> = T | () -> T
 type Background = {
 	read width: Can<number>?,
 	read height: Can<number>?,
+	read order: Can<number>?,
 
 	read text: Can<string>,
 	read weight: Can<Enum.FontWeight>?,
@@ -50,6 +51,7 @@ return function(props: Background)
 		end,
 		TextWrapped = props.wrapped,
 		TextXAlignment = props.xalignment,
+		LayoutOrder = props.order,
 
 		BackgroundTransparency = 1,
 

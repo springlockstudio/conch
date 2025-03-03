@@ -4,14 +4,14 @@ local console = require "./console"
 local context = require "./context"
 local types = require "./types"
 
-local function noop(v) return v end
+local function noop(v: any) return v end
 
 local function wrap_if_not(value)
 	return if type(value) == "table" then value else { value }
 end
 
 local anyT = {
-	convert = noop,
+	convert = noop :: (any) -> any,
 
 	analysis = {
 		kind = "argument",
@@ -21,7 +21,7 @@ local anyT = {
 }
 
 local stringT = {
-	convert = noop,
+	convert = tostring :: (string) -> string,
 
 	analysis = {
 		kind = "argument",
@@ -31,7 +31,17 @@ local stringT = {
 }
 
 local stringsT = {
-	convert = wrap_if_not,
+	convert = function(value)
+		if typeof(value) == "table" then
+			local copy = table.clone(value)
+			for k, v in copy do
+				copy[k] = tostring(v)
+			end
+			return copy
+		else
+			return { tostring(value) }
+		end
+	end,
 
 	analysis = {
 		kind = "argument",
@@ -61,7 +71,17 @@ local numbersT = {
 }
 
 local booleanT = {
-	convert = noop,
+	convert = function(v)
+		if typeof(v) == "boolean" then
+			return v
+		elseif typeof(v) == "number" and v > 0 then
+			return true
+		elseif typeof(v) == "number" and v <= 0 then
+			return false
+		else
+			error(`{typeof(v)} is not a valid boolean`)
+		end
+	end,
 
 	analysis = {
 		kind = "argument",
@@ -85,7 +105,31 @@ local booleanT = {
 }
 
 local booleansT = {
-	convert = wrap_if_not,
+	convert = function(value: unknown): { boolean }
+		if typeof(value) == "table" then
+			local copy = table.clone(value) :: { [any]: any }
+			for k, v in copy do
+				if typeof(v) == "boolean" then
+					copy[k] = v
+				elseif typeof(v) == "number" and v > 0 then
+					copy[k] = true
+				elseif typeof(v) == "number" and v <= 0 then
+					copy[k] = false
+				else
+					error(`type {typeof(v)} of {k} is not a valid boolean`)
+				end
+			end
+			return copy
+		elseif typeof(value) == "boolean" then
+			return { value }
+		elseif typeof(value) == "number" and value > 0 then
+			return { true }
+		elseif typeof(value) == "number" and value <= 0 then
+			return { false }
+		else
+			error(`{typeof(value)} is not a valid boolean`)
+		end
+	end,
 
 	analysis = {
 		kind = "argument",
@@ -118,7 +162,7 @@ local tableT = {
 	},
 }
 
-local function into_vector(value: vector | Vector3 | { number })
+local function into_vector(value: vector | Vector3 | { number }): vector
 	if type(value) == "vector" then
 		return value
 	elseif typeof(value) == "table" then
@@ -140,7 +184,7 @@ local vectorT = {
 local vectorsT = {
 	convert = function(
 		value: vector | Vector3 | { vector | Vector3 | { number } }
-	)
+	): { vector }
 		if type(value) == "vector" then
 			return { value }
 		elseif typeof(value) == "table" then
@@ -161,13 +205,16 @@ local vectorsT = {
 	},
 }
 
-local function map_enum<V>(
+--[=[
+Generates a new enum that can be passed to conch.register_type. It maps each string in a table to a specific value.
+]=]
+local function enum_map<V>(
 	map: { [string]: V },
 	name: string?,
 	description: string?
 )
 	return {
-		convert = function(value)
+		convert = function(value): V
 			local key = tostring(value)
 			if map[key] == nil then error(`{key} is not valid`, 0) end
 			return map[key]
@@ -177,7 +224,7 @@ local function map_enum<V>(
 			kind = "argument",
 			name = name or "enum",
 			description = description,
-			type = "enum",
+			type = name or "enum",
 			suggestion_generator = function(text: string)
 				text = text:lower()
 				local suggestions = {}
@@ -193,18 +240,17 @@ local function map_enum<V>(
 	}
 end
 
-local function create_enum<T>(
-	options: { T },
-	name: string?,
-	description: string?
-): T
+--[=[
+Generates a new enum that can be passed to conch.register_type
+]=]
+local function enum_new<T>(options: { T }, name: string?, description: string?)
 	local map = {}
 
 	for _, value in options do
 		map[tostring(value)] = value
 	end
 
-	return map_enum(map, name, description)
+	return enum_map(map, name, description)
 end
 
 local function convert_arg_to_player(arg: string | number | "@s"): Player
@@ -247,15 +293,7 @@ local function convert_arg_to_players(
 end
 
 local playerT = {
-	convert = function(...)
-		local values = { ... }
-
-		for i, v in values do
-			values[i] = convert_arg_to_player(v)
-		end
-
-		return unpack(values)
-	end,
+	convert = function(player) return convert_arg_to_player(player) end,
 
 	analysis = {
 		kind = "argument",
@@ -286,15 +324,7 @@ local playerT = {
 
 local playersT = {
 	kind = "any",
-	convert = function(...)
-		local values = { ... }
-
-		for i, v in values do
-			values[i] = convert_arg_to_players(v)
-		end
-
-		return unpack(values)
-	end,
+	convert = function(players) return convert_arg_to_players(players) end,
 
 	analysis = {
 		kind = "argument",
@@ -333,35 +363,10 @@ local function generate_names_for_enum(enum: Enum)
 		map[item.Name] = item
 	end
 
-	return map_enum(map, tostring(enum))
+	return enum_map(map, tostring(enum))
 end
-
-console.register_type("any", anyT)
-console.register_type("string", stringT)
-console.register_type("strings", stringsT)
-console.register_type("number", numberT)
-console.register_type("numbers", numbersT)
-console.register_type("boolean", booleanT)
-console.register_type("booleans", booleansT)
-console.register_type("table", tableT)
-console.register_type("vector", vectorT)
-console.register_type("vectors", vectorsT)
-console.register_type("player", playerT)
-console.register_type("players", playersT)
-console.register_type("userinput", generate_names_for_enum(Enum.UserInputType))
 
 type G<T> = (name: string?, description: string?) -> T
-
-local function generator(type: string): any
-	return function(name: string?, description: string?)
-		return {
-			name = name,
-			description = description,
-			kind = "arg",
-			type = type,
-		}
-	end
-end
 
 local function variadic<T>(argument: T): ...T
 	local a: types.Type = argument :: any
@@ -371,22 +376,25 @@ end
 
 return {
 
-	any = generator "any" :: G<any>,
-	string = generator "string" :: G<string>,
-	strings = generator "strings" :: G<{ string }>,
-	number = generator "number" :: G<number>,
-	numbers = generator "numbers" :: G<{ number }>,
-	boolean = generator "boolean" :: G<boolean>,
-	booleans = generator "booleans" :: G<{ boolean }>,
-	table = generator "table" :: G<{}>,
-	vector = generator "vector" :: G<vector>,
-	vectors = generator "vectors" :: G<{ vector }>,
-	player = generator "player" :: G<Player>,
-	players = generator "players" :: G<{ Player }>,
+	any = console.register_type("any", anyT) :: G<any>,
+	string = console.register_type("string", stringT) :: G<string>,
+	strings = console.register_type("strings", stringsT) :: G<{ string }>,
+	number = console.register_type("number", numberT) :: G<number>,
+	numbers = console.register_type("numbers", numbersT) :: G<{ number }>,
+	boolean = console.register_type("boolean", booleanT) :: G<boolean>,
+	booleans = console.register_type("booleans", booleansT) :: G<{ boolean }>,
+	table = console.register_type("table", tableT) :: G<{}>,
+	vector = console.register_type("vector", vectorT) :: G<vector>,
+	vectors = console.register_type("vectors", vectorsT) :: G<{ vector }>,
+	player = console.register_type("player", playerT) :: G<Player>,
+	players = console.register_type("players", playersT) :: G<{ Player }>,
 
-	userinput = generator "userinput" :: G<Enum.UserInputType>,
+	userinput = console.register_type(
+		"userinput",
+		generate_names_for_enum(Enum.UserInputType)
+	) :: G<Enum.UserInputType>,
 
 	variadic = variadic,
-	enum_new = create_enum,
-	enum_map = map_enum,
+	enum_new = enum_new,
+	enum_map = enum_map,
 }

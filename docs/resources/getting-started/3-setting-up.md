@@ -1,12 +1,3 @@
----
-prev:
-    text: Installation
-    link: ./2-installation/
-next:
-    text: Transactions
-    link: ../advanced-concepts/transactions/
----
-
 # Setting Up
 
 ## Server Setup
@@ -16,7 +7,7 @@ Require on the server and run the following functions:
 ```luau
 local conch = require(path.to.conch)
 
-conch.initate_default_lifecycle()
+conch.initiate_default_lifecycle()
 ```
 
 ## Client Setup

@@ -1,8 +1,8 @@
 name = "alicesaidhi/conch_types"
-version = "0.2.0-rc.3"
+version = "0.2.0"
 
 [target]
-environment = "luau"
+environment = "roblox"
 lib = "src/lib.luau"
 build_files = ["src"]
 

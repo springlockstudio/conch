@@ -17,13 +17,13 @@ hero:
       link: /resources/getting-started/1-why/
     - theme: alt
       text: API Reference
-      link: /api/conch/
+      link: /api/conch
     - theme: alt
       text: Github
       link: https://github.com/alicesaidhi/conch
 features:
   - title: Simple and easy-to-use
-    details: Provides a simple and easy to use API that supports any structure.
+    details: Provides a simple and easy to use API that supports any structure. 
   - title: Turing Complete
     details: A full-blown language with variables, analysis and control flow.
   - title: Modular

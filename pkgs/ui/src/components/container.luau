@@ -1,4 +1,3 @@
-local theme = require "../theme"
 local vide = require "../../roblox_packages/vide"
 
 local create = vide.create

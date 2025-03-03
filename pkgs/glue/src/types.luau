@@ -1,4 +1,4 @@
-local types = require "../luau_packages/types"
+local types = require "../roblox_packages/types"
 
 export type Type = {
 	kind: "varargs" | "arg",
@@ -46,6 +46,7 @@ export type AfterCommandRunContext = {
 
 export type CommandRepresentation = {
 	read name: string,
+	read description: string,
 	read permissions: { string },
 	read callback: (...any) -> ...any,
 	read type_info: types.AnalysisCommand,

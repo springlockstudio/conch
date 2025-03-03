@@ -205,33 +205,33 @@ local function generate_wally_release_files(path: string)
 		end
 	end
 
-	local luau_packages: { [string]: string } = {}
-	do
-		local dependencies = pesde_toml.dependencies
-		if dependencies then
-			for name, dependency in dependencies do
-				local realm = dependency.target or pesde_toml.target.environment
-				if realm ~= "luau" then continue end
-				local file =
-					fs.readFile(path .. "/luau_packages/" .. name .. ".luau")
-				local package_file = {
-					`local main = require(script.Parent.Parent.Parent["{name}"])`,
-				}
+	-- local luau_packages: { [string]: string } = {}
+	-- do
+	-- 	local dependencies = pesde_toml.dependencies
+	-- 	if dependencies then
+	-- 		for name, dependency in dependencies do
+	-- 			local realm = dependency.target or pesde_toml.target.environment
+	-- 			if realm ~= "luau" then continue end
+	-- 			local file =
+	-- 				fs.readFile(path .. "/luau_packages/" .. name .. ".luau")
+	-- 			local package_file = {
+	-- 				`local main = require(script.Parent.Parent.Parent["{name}"])`,
+	-- 			}
 
-				for value in string.gmatch(file, "export type (.-) = module.") do
-					local export_without_default =
-						string.gsub(value, "=.->", ">")
-					table.insert(
-						package_file,
-						`export type {value} = main.{export_without_default}`
-					)
-				end
+	-- 			for value in string.gmatch(file, "export type (.-) = module.") do
+	-- 				local export_without_default =
+	-- 					string.gsub(value, "=.->", ">")
+	-- 				table.insert(
+	-- 					package_file,
+	-- 					`export type {value} = main.{export_without_default}`
+	-- 				)
+	-- 			end
 
-				table.insert(package_file, "return main")
-				luau_packages[name] = table.concat(package_file, "\n")
-			end
-		end
-	end
+	-- 			table.insert(package_file, "return main")
+	-- 			luau_packages[name] = table.concat(package_file, "\n")
+	-- 		end
+	-- 	end
+	-- end
 
 	local wally_toml = {}
 	do
@@ -289,9 +289,9 @@ local function generate_wally_release_files(path: string)
 		)
 	end
 
-	for name, package in luau_packages do
-		fs.writeFile(path .. "/dist/luau_packages/" .. name .. ".luau", package)
-	end
+	-- for name, package in luau_packages do
+	-- 	fs.writeFile(path .. "/dist/luau_packages/" .. name .. ".luau", package)
+	-- end
 
 	fs.copy(path .. "/src", path .. "/dist/src", true)
 	fs.writeFile(path .. "/dist/lib.luau", lib_file_src)
@@ -382,7 +382,7 @@ local function get_order()
 end
 
 local function cleanup_files(path: string)
-	-- fs.removeDir(path .. "/dist")
+	fs.removeDir(path .. "/dist")
 	fs.removeFile(path .. "/wally.toml")
 	fs.removeFile(path .. "/default.project.json")
 end

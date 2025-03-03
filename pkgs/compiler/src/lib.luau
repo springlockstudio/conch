@@ -1,5 +1,5 @@
 --!strict
-local types = require "../luau_packages/types"
+local types = require "../roblox_packages/types"
 
 type VMState = {
 	locals: { string },
@@ -9,7 +9,7 @@ type VMState = {
 }
 
 local function DEFINE_LOCAL(state: VMState, key: string)
-	table.insert(state.locals, 1, key)
+	table.insert(state.locals, key)
 end
 
 -- local function GET_VALUE_INDEX(state: VMState, key: string): (false | number, number)
@@ -68,6 +68,7 @@ local function compile(
 	local compile_for
 	local compile_while
 	local compile_block
+	local compile_vector
 
 	function compile_expression(e: types.Expression)
 		--FIXME: Type unions don't properly evaluate state??
@@ -102,7 +103,35 @@ local function compile(
 			compile_table(expression.table)
 		elseif expression.kind == "var" then
 			compile_var(expression.var)
+		elseif expression.kind == "vector" then
+			compile_vector(expression)
 		end
+	end
+
+	function compile_vector(vector: types.Expression_Vector)
+		local x = vector.contents[1]
+		local y = vector.contents[2]
+		local z = vector.contents[3]
+
+		if x then
+			compile_expression(x)
+		else
+			INSERT { kind = "push_number", n = 0 }
+		end
+		if y then
+			compile_expression(y)
+		else
+			INSERT { kind = "push_number", n = 0 }
+		end
+		if z then
+			compile_expression(z)
+		else
+			INSERT { kind = "push_number", n = 0 }
+		end
+
+		INSERT {
+			kind = "push_vector",
+		}
 	end
 
 	function compile_table(t: types.Table)
@@ -270,27 +299,36 @@ local function compile(
 	end
 
 	function compile_for(stat: types.Stat_For)
-		local start = next_instruction
 		local arguments = #stat.call.arguments
 		local previous_begins = loop_begins_at :: number
-		loop_begins_at = start
 
 		if stat.expression.kind == "command" then
-			compile_command(stat.expression, arguments)
+			compile_command(stat.expression, 1)
 		else
 			compile_expression(stat.expression)
 		end
 
+		INSERT { kind = "turn-into-iterator" }
+		SET_VALUE "--iterator"
+		local start = next_instruction
+		loop_begins_at = start
+
+		GET_VALUE "--iterator"
+		INSERT { kind = "call", arguments = 0, results = math.max(1, arguments) }
+
 		local instruction: types.Instruction_IfNotNil =
 			{ kind = "jump_if_not_nil", index = 1, to = 0 }
 		INSERT(instruction)
+
 		local block_start = next_instruction
 
 		for i, argument in stat.call.arguments do
-			DEFINE_LOCAL(vm_state, argument.text)
+			SET_VALUE(argument.text)
 		end
+		INSERT { kind = "reset" }
 
 		compile_block(stat.call.block)
+
 		INSERT { kind = "goto", to = start }
 		instruction.to = next_instruction
 
@@ -318,8 +356,8 @@ local function compile(
 			compile_expression(stat.expression)
 		end
 
-		local instruction: types.Instruction_IfNotNil =
-			{ kind = "jump_if_not_nil", index = 1, to = 0 }
+		local instruction: types.Instruction_If =
+			{ kind = "jump_if", index = 1, to = 0 }
 		INSERT(instruction)
 		local block_start = next_instruction
 

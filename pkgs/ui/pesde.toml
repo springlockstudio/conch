@@ -1,6 +1,6 @@
 name = "alicesaidhi/conch_ui"
-version = "0.2.0-rc.3"
-includes = ["src/**/*", "pesde.toml"]
+version = "0.2.2"
+includes = ["src/**", "pesde.toml"]
 
 [target]
 environment = "roblox"
@@ -13,11 +13,7 @@ default = "https://github.com/daimond113/pesde-index"
 [wally_indices]
 default = "https://github.com/UpliftGames/wally-index"
 
-[scripts]
-roblox_sync_config_generator = ".pesde/roblox_sync_config_generator.luau"
-sourcemap_generator = ".pesde/sourcemap_generator.luau"
-
 [dependencies]
 vide = { wally = "wally#centau/vide", version = "^0.3.1" }
-ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "luau" }
-conch_glue = { workspace = "alicesaidhi/conch", version = "^" }
+ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "roblox" }
+conch = { workspace = "alicesaidhi/conch", version = "^" }
