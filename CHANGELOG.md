@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `conch.on_execution` as a callback that executes after a command completes
-- Add `conch.on_command_run` as a callback that executes after a command completes
+- Add `conch.on_command_run` as a callback that executes after a command has been ran. When used on the server, only runs after the client calls a server command.
 
 --------------------------------------------------------------------------------
 
