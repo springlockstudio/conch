@@ -6,13 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
-## UNRELEASED conch-ui
+## 0.2.1 conch-compiler - 2025-03-05
+
+### Fixed
+
+- Fix for loops storing values in reverse
+
+## 0.2.3 conch-ui - 2025-03-05
 
 ### Fixed
 
 - Fix issue with cursor going behind while typing in immediate mode
 
-## UNRELEASED conch
+## 0.2.3 conch - 2025-03-05
 
 ### Added
 
