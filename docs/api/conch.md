@@ -215,3 +215,30 @@ Analyzes the given source and returns information about the given source code an
 	```luau
 	function conch.analyze(src: string, where: number): AnalysisInformation
 	```
+
+### on_command_run()
+
+Calls the given function to whenever a command runs that is registered by the host. On the server, it only gets called for commands registered by the server.
+
+- **Type**
+
+	```luau
+	function conch.on_command_run(fn: (ctx: {
+		ok: boolean,
+		who: User,
+		command: string,
+		arguments: { unknown },
+		result: { unknown }
+	}) -> ()): () -> ()
+	```
+
+### on_execution()
+
+Calls the given function whenever a player executes something.
+
+- **Type**
+
+	```luau
+	function conch.on_execution(fn: (player: Player, src: string) -> ()): () -> ()
+	```
+
