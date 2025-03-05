@@ -404,12 +404,12 @@ end
 for _, path in get_order() do
 	print("Generating release for", path)
 	generate_wally_release_files(path)
-	-- local status = process.spawn("wally", { "publish" }, {
-	-- 	cwd = path,
-	-- 	env = {},
-	-- 	shell = true,
-	-- })
+	local status = process.spawn("wally", { "publish" }, {
+		cwd = path,
+		env = {},
+		shell = true,
+	})
 
-	-- cleanup_files(path)
-	-- if status.ok == false then error(status.stderr) end
+	cleanup_files(path)
+	if status.ok == false then error(status.stderr) end
 end

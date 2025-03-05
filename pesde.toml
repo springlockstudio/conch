@@ -4,6 +4,7 @@ description = "Modern command library for Roblox"
 authors = ["alicesaidhi"]
 repository = "https://github.com/alicesaidhi/conch"
 license = "MIT"
+private = true
 
 workspace_members = ["pkgs/*"]
 
