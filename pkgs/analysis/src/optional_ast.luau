@@ -436,10 +436,11 @@ local function parse(input: buffer, can_yield: boolean?)
 		if c == 0 then return "eof" end
 
 		if c == char "#" then
+			bump_any()
 			while c ~= char "\n" and c ~= 0 do
-				bump_any()
+				c = bump_any()
 			end
-			return "comment"
+			return read_kind()
 		elseif is_whitespace(c) then
 			bump()
 			return "whitespace"
@@ -566,7 +567,7 @@ local function parse(input: buffer, can_yield: boolean?)
 			return read_kind()
 		end
 
-		error(`no symbol matching {string.char(c)}`, 0)
+		bump()
 		return "error"
 	end
 

@@ -156,9 +156,9 @@ local function parse(input: buffer, can_yield: boolean?)
 
 		if c == char "#" then
 			while c ~= char "\n" and c ~= 0 do
-				bump_any()
+				c = bump_any()
 			end
-			return "comment"
+			return read_kind()
 		elseif is_whitespace(c) then
 			bump()
 			return "whitespace"
