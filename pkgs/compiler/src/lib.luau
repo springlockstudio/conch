@@ -1,5 +1,5 @@
 --!strict
-local types = require "../roblox_packages/types"
+local types = require("../roblox_packages/types")
 
 type VMState = {
 	locals: { string },
@@ -26,10 +26,7 @@ end
 --     return false, 0
 -- end
 
-local function compile(
-	block: types.Block,
-	vm_state: VMState
-): { types.Instruction }
+local function compile(block: types.Block, vm_state: VMState): { types.Instruction }
 	local instructions = vm_state.instructions
 	local next_instruction = #instructions + 1
 	local loop_begins_at: number | false = false
@@ -42,18 +39,18 @@ local function compile(
 	local function GET_VALUE(key: string)
 		local index = table.find(vm_state.locals, key)
 		if index then
-			INSERT { kind = "push_local", index = index }
+			INSERT({ kind = "push_local", index = index })
 		else
-			INSERT { kind = "push_global", name = key }
+			INSERT({ kind = "push_global", name = key })
 		end
 	end
 
 	local function SET_VALUE(key: string)
 		local index = table.find(vm_state.locals, key)
 		if index then
-			INSERT { kind = "set_local", index = index }
+			INSERT({ kind = "set_local", index = index })
 		else
-			INSERT { kind = "set_global", name = key }
+			INSERT({ kind = "set_global", name = key })
 		end
 	end
 
@@ -75,15 +72,26 @@ local function compile(
 		local expression: types.Expression = e
 
 		if expression.kind == "boolean" then
-			INSERT {
+			INSERT({
 				kind = "push_boolean",
 				b = if expression.token.kind == "true" then true else false,
-			}
+			})
 		elseif expression.kind == "number" then
-			INSERT {
+			local n_string = string.gsub(expression.token.text, "_", "")
+			local base_prefix = string.sub(expression.token.text, 2)
+			local radix = if base_prefix == "0b" then 2 elseif base_prefix == "0x" then 16 else 10
+			local n = if radix ~= 10 then string.sub(n_string, 3) else n_string
+
+			local value = tonumber(n, radix)
+
+			if not value then
+				error(`{expression.token.text} could not be converted into a number`, 0)
+			end
+
+			INSERT({
 				kind = "push_number",
-				n = assert(tonumber(expression.token.text)),
-			}
+				n = value,
+			})
 		elseif expression.kind == "evaluate" then
 			if expression.body.kind == "command" then
 				compile_command(expression.body, 1)
@@ -93,12 +101,12 @@ local function compile(
 		elseif expression.kind == "lambda" then
 			compile_lambda(expression.body)
 		elseif expression.kind == "nil" then
-			INSERT { kind = "push_nil" }
+			INSERT({ kind = "push_nil" })
 		elseif expression.kind == "string" then
-			INSERT {
+			INSERT({
 				kind = "push_string",
 				s = string.sub(expression.token.text, 2, -2),
-			}
+			})
 		elseif expression.kind == "table" then
 			compile_table(expression.table)
 		elseif expression.kind == "var" then
@@ -116,41 +124,41 @@ local function compile(
 		if x then
 			compile_expression(x)
 		else
-			INSERT { kind = "push_number", n = 0 }
+			INSERT({ kind = "push_number", n = 0 })
 		end
 		if y then
 			compile_expression(y)
 		else
-			INSERT { kind = "push_number", n = 0 }
+			INSERT({ kind = "push_number", n = 0 })
 		end
 		if z then
 			compile_expression(z)
 		else
-			INSERT { kind = "push_number", n = 0 }
+			INSERT({ kind = "push_number", n = 0 })
 		end
 
-		INSERT {
+		INSERT({
 			kind = "push_vector",
-		}
+		})
 	end
 
 	function compile_table(t: types.Table)
-		INSERT { kind = "push_table", alloc = 1 }
+		INSERT({ kind = "push_table", alloc = 1 })
 
 		local index = 1
 		for _, field in t.fields do
 			if field.kind == "exprkey" then
 				compile_expression(field.key)
 				compile_expression(field.value)
-				INSERT { kind = "set_table" }
+				INSERT({ kind = "set_table" })
 			elseif field.kind == "namekey" then
-				INSERT { kind = "push_string", s = field.name.text }
+				INSERT({ kind = "push_string", s = field.name.text })
 				compile_expression(field.value)
-				INSERT { kind = "set_table" }
+				INSERT({ kind = "set_table" })
 			elseif field.kind == "nokey" then
-				INSERT { kind = "push_number", n = index }
+				INSERT({ kind = "push_number", n = index })
 				compile_expression(field.value)
-				INSERT { kind = "set_table" }
+				INSERT({ kind = "set_table" })
 				index += 1
 			end
 		end
@@ -162,11 +170,11 @@ local function compile(
 			compile_expression(argument)
 		end
 
-		INSERT {
+		INSERT({
 			kind = "call",
 			arguments = #cmd.arguments,
 			results = returns or math.huge,
-		}
+		})
 	end
 
 	function compile_lambda(lambda: types.FunctionBody)
@@ -183,17 +191,17 @@ local function compile(
 		end
 
 		compile(lambda.block, state)
-		INSERT {
+		INSERT({
 			kind = "push_function",
 			body = state.instructions,
 			arguments = #lambda.arguments,
-		}
+		})
 	end
 
 	function compile_var(var: types.Var)
 		local prefix = var.prefix
 		if prefix.kind == "global" then
-			INSERT { kind = "push_cmd", name = prefix.token.text }
+			INSERT({ kind = "push_cmd", name = prefix.token.text })
 		elseif prefix.kind == "name" then
 			GET_VALUE(prefix.name.text)
 		elseif prefix.kind == "paren" then
@@ -212,10 +220,10 @@ local function compile(
 					compile_expression(suffix.expr)
 				end
 
-				INSERT { kind = "index" }
+				INSERT({ kind = "index" })
 			elseif suffix.kind == "nameindex" then
-				INSERT { kind = "push_string", s = suffix.name.text }
-				INSERT { kind = "index" }
+				INSERT({ kind = "push_string", s = suffix.name.text })
+				INSERT({ kind = "index" })
 			end
 		end
 	end
@@ -229,7 +237,7 @@ local function compile(
 		else
 			compile_expression(expression)
 		end
-		INSERT { kind = "set_global", name = key }
+		INSERT({ kind = "set_global", name = key })
 	end
 
 	function compile_last(s: types.LastStatement)
@@ -243,13 +251,13 @@ local function compile(
 				end
 			end
 
-			INSERT { kind = "return" }
+			INSERT({ kind = "return" })
 		elseif statement.kind == "break" then
 			assert(loop_begins_at, "cannot use continue outside a loop")
-			INSERT { kind = "goto-pending", type = "break" }
+			INSERT({ kind = "goto-pending", type = "break" })
 		elseif statement.kind == "continue" then
 			assert(loop_begins_at, "cannot use continue outside a loop")
-			INSERT { kind = "goto", to = loop_begins_at }
+			INSERT({ kind = "goto", to = loop_begins_at })
 		else
 			error(`unimplemented {statement.kind}`)
 		end
@@ -265,34 +273,29 @@ local function compile(
 			else
 				compile_expression(condition.condition)
 			end
-			INSERT { kind = "goto-pending", type = "next-if" }
+			INSERT({ kind = "goto-pending", type = "next-if" })
 
 			compile_block(condition.block)
-			INSERT { kind = "goto-pending", type = "if-end" }
+			INSERT({ kind = "goto-pending", type = "if-end" })
 
 			for i = next_instruction - 1, start_condition, -1 do
 				local instruction = instructions[i]
 
-				if
-					instruction.kind == "goto-pending"
-					and instruction.type == "next-if"
-				then
-					local jump_if: types.Instruction_If =
-						{ kind = "jump_if", to = next_instruction }
+				if instruction.kind == "goto-pending" and instruction.type == "next-if" then
+					local jump_if: types.Instruction_If = { kind = "jump_if", to = next_instruction }
 					instructions[i] = jump_if
 				end
 			end
 		end
 
-		if stat.fallback then compile_block(stat.fallback) end
+		if stat.fallback then
+			compile_block(stat.fallback)
+		end
 
 		for i = next_instruction - 1, start, -1 do
 			local instruction = instructions[i]
 
-			if
-				instruction.kind == "goto-pending"
-				and instruction.type == "if-end"
-			then
+			if instruction.kind == "goto-pending" and instruction.type == "if-end" then
 				instructions[i] = { kind = "goto", to = next_instruction }
 			end
 		end
@@ -308,16 +311,15 @@ local function compile(
 			compile_expression(stat.expression)
 		end
 
-		INSERT { kind = "turn-into-iterator" }
-		SET_VALUE "--iterator"
+		INSERT({ kind = "turn-into-iterator" })
+		SET_VALUE("--iterator")
 		local start = next_instruction
 		loop_begins_at = start
 
-		GET_VALUE "--iterator"
-		INSERT { kind = "call", arguments = 0, results = math.max(1, arguments) }
+		GET_VALUE("--iterator")
+		INSERT({ kind = "call", arguments = 0, results = math.max(1, arguments) })
 
-		local instruction: types.Instruction_IfNotNil =
-			{ kind = "jump_if_not_nil", index = 1, to = 0 }
+		local instruction: types.Instruction_IfNotNil = { kind = "jump_if_not_nil", index = 1, to = 0 }
 		INSERT(instruction)
 
 		local block_start = next_instruction
@@ -326,19 +328,16 @@ local function compile(
 			local argument = stat.call.arguments[i]
 			SET_VALUE(argument.text)
 		end
-		INSERT { kind = "reset" }
+		INSERT({ kind = "reset" })
 
 		compile_block(stat.call.block)
 
-		INSERT { kind = "goto", to = start }
+		INSERT({ kind = "goto", to = start })
 		instruction.to = next_instruction
 
 		for i = next_instruction - 1, block_start, -1 do
 			local instruction = instructions[i]
-			if
-				instruction.kind == "goto-pending"
-				and instruction.type == "break"
-			then
+			if instruction.kind == "goto-pending" and instruction.type == "break" then
 				instructions[i] = { kind = "goto", to = next_instruction }
 			end
 		end
@@ -357,22 +356,18 @@ local function compile(
 			compile_expression(stat.expression)
 		end
 
-		local instruction: types.Instruction_If =
-			{ kind = "jump_if", index = 1, to = 0 }
+		local instruction: types.Instruction_If = { kind = "jump_if", index = 1, to = 0 }
 		INSERT(instruction)
 		local block_start = next_instruction
 
 		compile_block(stat.block)
 
-		INSERT { kind = "goto", to = start }
+		INSERT({ kind = "goto", to = start })
 		instruction.to = next_instruction
 
 		for i = next_instruction - 1, block_start, -1 do
 			local instruction = instructions[i]
-			if
-				instruction.kind == "goto-pending"
-				and instruction.type == "break"
-			then
+			if instruction.kind == "goto-pending" and instruction.type == "break" then
 				instructions[i] = { kind = "goto", to = next_instruction }
 			end
 		end
@@ -397,7 +392,9 @@ local function compile(
 			end
 		end
 
-		if block.last_statement then compile_last(block.last_statement) end
+		if block.last_statement then
+			compile_last(block.last_statement)
+		end
 	end
 
 	compile_block(block)
