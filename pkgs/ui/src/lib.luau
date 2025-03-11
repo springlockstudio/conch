@@ -1,5 +1,5 @@
-local ContextActionService = game:GetService "ContextActionService"
 local Players = game:GetService "Players"
+local UserInputService = game:GetService "UserInputService"
 
 local app = require "./app"
 local conch = require "../roblox_packages/conch"
@@ -17,12 +17,16 @@ end
 
 local function bind_to(input: Enum.KeyCode | Enum.UserInputType)
 	mount()
-	ContextActionService:BindAction("Trigger Conch", function(_, state)
-		if state == Enum.UserInputState.Begin then
-			opened(not opened())
-			focused(opened())
+	UserInputService.InputBegan:Connect(function(input_object)
+		if
+			input_object.KeyCode ~= input
+			and input_object.UserInputType ~= input
+		then
+			return
 		end
-	end, false, input)
+		opened(not opened())
+		focused(opened())
+	end)
 end
 
 return {
