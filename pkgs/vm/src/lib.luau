@@ -214,7 +214,7 @@ local function create_vm()
 
 		local old_n = n
 		n = 0
-		return old_n, unpack(stack, 1, n)
+		return old_n, unpack(stack, 1, old_n)
 	end
 
 	start = os.clock()

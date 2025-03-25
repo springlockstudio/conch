@@ -104,6 +104,13 @@ local function execute(text: string)
 	)
 		if not ok then
 			console.output { kind = "error", text = tostring(result) }
+		else
+			for i = 1, select("#", ...) do
+				console.output {
+					kind = "normal",
+					text = tostring((select(i, ...))),
+				}
+			end
 		end
 	end
 

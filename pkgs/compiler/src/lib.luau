@@ -376,11 +376,16 @@ local function compile(block: types.Block, vm_state: VMState): { types.Instructi
 	end
 
 	function compile_block(block: types.Block)
-		for _, statement in block.body do
+		for idx, statement in block.body do
 			if statement.kind == "assign" then
 				compile_assignment(statement, vm_state)
 			elseif statement.kind == "command" then
-				compile_command(statement, 0)
+				compile_command(
+					statement,
+					if not block.last_statement and idx == #block.body
+						then 8000
+						else 0
+				)
 			elseif statement.kind == "for" then
 				compile_for(statement)
 			elseif statement.kind == "if" then
