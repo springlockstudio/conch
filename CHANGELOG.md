@@ -6,13 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 --------------------------------------------------------------------------------
 
+## 0.2.1 conch-ast - 2025-03-25
+
+- Fix comments causing an infinite loop
+
+## 0.2.1 conch-analysis - 2025-03-25
+
+- Fix comments causing an infinite loop
+
 ## 0.2.2 conch-compiler - 2025-03-25
 
 - Output all values from the stack
+- Fix valid number literals not converting (0x, 0b, _)
 
 ## 0.2.1 conch-vm - 2025-03-25
 
 - `vm.run` now returns how many results and the remaining values on the stack
+
+## 0.2.4 conch-ui - 2025-03-25
+
+- Fix UI not closing when pressing the bound key
 
 ## 0.2.4 conch - 2025-03-25
 
