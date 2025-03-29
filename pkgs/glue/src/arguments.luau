@@ -14,7 +14,8 @@ local anyT = {
 	convert = noop :: (any) -> any,
 
 	analysis = {
-		kind = "argument",
+		kind = "argument" :: "argument",
+		optional = false,
 		name = "any",
 		type = "any",
 	},
@@ -25,6 +26,7 @@ local stringT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "string",
 		type = "string",
 	},
@@ -45,6 +47,7 @@ local stringsT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "strings",
 		type = "{ string }",
 	},
@@ -55,6 +58,7 @@ local numberT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "number",
 		type = "number",
 	},
@@ -65,6 +69,7 @@ local numbersT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "numbers",
 		type = "{ number }",
 	},
@@ -85,6 +90,7 @@ local booleanT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "boolean",
 		type = "boolean",
 
@@ -133,6 +139,7 @@ local booleansT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "boolean",
 		type = "boolean",
 
@@ -157,6 +164,7 @@ local tableT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "table",
 		type = "table",
 	},
@@ -177,6 +185,7 @@ local vectorT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "vector",
 		type = "vector",
 	},
@@ -200,6 +209,7 @@ local vectorsT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "vector",
 		type = "vector",
 	},
@@ -222,6 +232,7 @@ local function enum_map<V>(
 
 		analysis = {
 			kind = "argument",
+			optional = false,
 			name = name or "enum",
 			description = description,
 			type = name or "enum",
@@ -297,6 +308,7 @@ local playerT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "player",
 		type = "Player",
 		suggestion_generator = function(text: string)
@@ -328,6 +340,7 @@ local playersT = {
 
 	analysis = {
 		kind = "argument",
+		optional = false,
 		name = "players",
 		type = "{ Player }",
 		suggestion_generator = function(text: string)
@@ -374,6 +387,12 @@ local function variadic<T>(argument: T): ...T
 	return a
 end
 
+local function optional<T>(argument: T): T | nil
+	local a: types.Type = argument :: any
+	a.optional = true
+	return a
+end
+
 return {
 
 	any = console.register_type("any", anyT) :: G<any>,
@@ -395,6 +414,9 @@ return {
 	) :: G<Enum.UserInputType>,
 
 	variadic = variadic,
+	optional = optional,
+	opt = optional,
+
 	enum_new = enum_new,
 	enum_map = enum_map,
 }

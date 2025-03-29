@@ -45,12 +45,26 @@ return function()
 	for _, s in string.split(STARTUP_TEXT, "\n") do
 		output { kind = "normal", text = s }
 	end
+	output {
+		kind = "warn",
+		text = "If you got here accidentally, run the `close-ui` command to close this UI.",
+	}
 
 	conch.register("clear", {
 		description = "Clears the console.",
 		permissions = {},
 		arguments = function() end,
 		callback = function() state.logs {} end,
+	})
+
+	conch.register("close-ui", {
+		description = "Close the CLI",
+		permissions = {},
+		arguments = function() end,
+		callback = function()
+			state.opened(false)
+			state.focused(false)
+		end,
 	})
 
 	local raw_text = source ""
@@ -60,9 +74,12 @@ return function()
 	local pending = source()
 
 	local input = derive(function()
+		debug.profilebegin "this"
 		if pending() then
+			debug.profileend()
 			return pending().src .. raw_text()
 		else
+			debug.profileend()
 			return raw_text()
 		end
 	end)

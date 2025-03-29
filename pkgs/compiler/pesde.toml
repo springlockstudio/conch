@@ -1,6 +1,6 @@
 name = "alicesaidhi/conch_compiler"
 version = "0.2.2"
-includes = ["src/*", "pesde.toml"]
+includes = ["src/**", "pesde.toml"]
 
 [target]
 environment = "roblox"

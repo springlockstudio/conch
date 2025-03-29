@@ -2,6 +2,7 @@ local types = require "../roblox_packages/types"
 
 export type Type = {
 	kind: "varargs" | "arg",
+	optional: boolean,
 	type: string,
 	name: string,
 	description: string,

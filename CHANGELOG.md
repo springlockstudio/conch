@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## 0.2.1 conch-analysis - 2025-03-25
 
 - Fix comments causing an infinite loop
+- Implement optional arguments
 
 ## 0.2.2 conch-compiler - 2025-03-25
 
@@ -25,11 +26,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## 0.2.4 conch-ui - 2025-03-25
 
+- Append existing startup with how to close the UI
+- Add a `close-ui` command  
 - Fix UI not closing when pressing the bound key
+- Implement optional arguments
 
 ## 0.2.4 conch - 2025-03-25
 
 - When executing a command, automatically log all results into the output
+- Implement optional arguments with `conch.args.opt` and `conch.args.optional`
 
 --------------------------------------------------------------------------------
 

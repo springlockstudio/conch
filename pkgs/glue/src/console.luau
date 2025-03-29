@@ -41,6 +41,7 @@ local function register_type<T>(
 		return {
 			name = name,
 			description = description,
+			optional = false,
 			kind = "arg",
 			type = type,
 		} :: any
@@ -153,6 +154,7 @@ local function register_command<T...>(
 			kind = if argument.kind == "varargs"
 				then "variadic"
 				else "argument",
+			optional = argument.optional,
 			name = argument.name or clone.name,
 			description = argument.description,
 			type = clone.type,
@@ -193,6 +195,8 @@ local function register_command<T...>(
 				variadic = converts[idx]
 				last_index = idx
 				break
+			elseif argument.optional and select(idx, ...) == nil then
+				custom[idx] = nil
 			else
 				custom[idx] = converts[idx]((select(idx, ...)))
 			end
@@ -204,7 +208,8 @@ local function register_command<T...>(
 			end
 		end
 
-		local results = { pcall(info.callback, unpack(custom)) }
+		local results =
+			{ pcall(info.callback, unpack(custom, 1, select("#", ...))) }
 		local ok = table.remove(results, 1)
 
 		local context = state.command_context[coroutine.running()]

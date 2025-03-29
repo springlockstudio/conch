@@ -1,5 +1,6 @@
 name = "alicesaidhi/conch_types"
 version = "0.2.0"
+includes = ["src/**", "pesde.toml"]
 
 [target]
 environment = "roblox"

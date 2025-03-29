@@ -110,7 +110,7 @@ export type Expression_Var = {
 }
 
 export type Expression =
-							| Expression_Nil
+	| Expression_Nil
 	| Expression_Boolean
 	| Expression_Number
 	| Expression_String
@@ -190,7 +190,7 @@ export type TableField_NoKey = {
 }
 
 export type TableField =
-							| TableField_ExprKey
+	| TableField_ExprKey
 	| TableField_NameKey
 	| TableField_NoKey
 
@@ -454,6 +454,7 @@ export type AnalysisInformation = {
 
 export type AnalysisCommandArgument = {
 	kind: "argument",
+	optional: boolean,
 	name: string,
 	description: string?,
 	type: string?,

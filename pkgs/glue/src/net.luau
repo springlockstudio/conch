@@ -21,6 +21,7 @@ export type RegisterCommandPacket = {
 	arguments: {
 		{
 			kind: "varargs" | "arg",
+			optional: boolean,
 			type: string,
 			name: string,
 			description: string,
@@ -148,11 +149,9 @@ function net.client.on_user_roles_update(
 	remotes.update_user_roles.OnClientEvent:Connect(callback :: any)
 end
 
-function net.client.on_command_registered(
-	callback: (
-		info: RegisterCommandPacket
-	) -> ()
-)
+function net.client.on_command_registered(callback: (
+	info: RegisterCommandPacket
+) -> ())
 	assert(net.client.initialized, "client not initialized")
 	assert_run_context "client"
 

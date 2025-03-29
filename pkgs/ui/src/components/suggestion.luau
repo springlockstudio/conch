@@ -23,6 +23,7 @@ export type AnalysisSuggestion = {
 export type AnalysisCommandArgument = {
 	kind: "argument",
 	name: string,
+	optional: boolean,
 	description: string | false,
 	type: string | false,
 	enum: { string } | false,
@@ -76,7 +77,12 @@ return function(props: Suggestion)
 		show(props.analyzing, function()
 			local analyzed = function()
 				return props.analyzing()
-					or { kind = "", name = "", description = "" }
+					or {
+						kind = "",
+						name = "",
+						description = "",
+						optional = false,
+					}
 			end
 
 			return background {
@@ -105,7 +111,11 @@ return function(props: Suggestion)
 					},
 
 					text {
-						text = function() return analyzed().type or "" end,
+						text = function()
+							return `{analyzed().type}{if analyzed().optional
+								then "?"
+								else ""}` or ""
+						end,
 						text_size = 18,
 						weight = Enum.FontWeight.Light,
 					},

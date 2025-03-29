@@ -50,7 +50,6 @@ end
 
 local function error(...)
 	local text = concat(...)
-	output { kind = "error", text = text }
 	error(text, 0)
 end
 

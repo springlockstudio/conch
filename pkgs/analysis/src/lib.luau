@@ -18,7 +18,7 @@ export type FeedAnalysisOptions = {
 }
 
 type Node =
-																		| ast.Command
+	| ast.Command
 	| ast.Expression_Boolean
 	| ast.Expression_Evaluate
 	| ast.Expression_Identifier
@@ -464,7 +464,7 @@ local function generate_analysis_info(
 		end
 
 		if type(value) == "table" then
-			for key, value in pairs(value) do
+			for key, value in value do
 				local text = string.lower(text)
 				local name = string.lower(key)
 
