@@ -64,7 +64,8 @@ export default defineConfig({
 					{ text: "Custom Commands", link: "/resources/getting-started/5-custom-commands" },
                 ] },
                 { text: "Concepts", collapsed: false, items: [
-					{ text: "Types", link: "/resources/advanced-concepts/types" }
+					{ text: "Types", link: "/resources/advanced-concepts/types" },
+					{ text: "Syntax", link: "/resources/advanced-concepts/syntax" },
                 ] },
 				
             ]
