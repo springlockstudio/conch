@@ -41,6 +41,8 @@ local function has_permissions(user: types.UserPublic, ...: types.Permission)
 
 	for _, role in user.roles do
 		if constants.ADMIN_ROLE == role then return true end
+		local permissions = state.roles[role]
+		if not permissions then continue end
 		for _, permission in state.roles[role] do
 			local index = table.find(permissions_necessary, permission)
 			if not index then continue end

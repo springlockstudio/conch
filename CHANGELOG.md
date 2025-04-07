@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 --------------------------------------------------------------------------------
 
+## 0.2.5 conch - 2025-04-08
+
+- Fix error iterating over undefined roles
+
+--------------------------------------------------------------------------------
+
 ## 0.2.1 conch-ast - 2025-03-29
 
 - Fix comments causing an infinite loop
