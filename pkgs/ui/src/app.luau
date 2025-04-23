@@ -46,6 +46,13 @@ return function()
 		output { kind = "normal", text = s }
 	end
 
+	conch.register("clear", {
+ 		description = "Clears the console.",
+ 		permissions = {},
+ 		arguments = function() end,
+ 		callback = function() state.logs {} end,
+ 	})
+
 	local raw_text = source ""
 	local working = source(false)
 	local cursor_position = source(0)
