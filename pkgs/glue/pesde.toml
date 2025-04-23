@@ -1,4 +1,4 @@
-name = "alicesaidhi/conch"
+name = "sesocell/conch"
 version = "0.2.5"
 includes = ["src/**", "pesde.toml"]
 
@@ -11,8 +11,8 @@ build_files = ["src"]
 default = "https://github.com/daimond113/pesde-index"
 
 [dependencies]
-ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "roblox" }
-compiler = { workspace = "alicesaidhi/conch_compiler", version = "^", target = "roblox" }
-vm = { workspace = "alicesaidhi/conch_vm", version = "^", target = "roblox" }
-types = { workspace = "alicesaidhi/conch_types", version = "^", target = "roblox" }
-intel = { workspace = "alicesaidhi/conch_analysis", version = "^", target = "roblox" }
+ast = { workspace = "sesocell/conch_ast", version = "^", target = "roblox" }
+compiler = { workspace = "sesocell/conch_compiler", version = "^", target = "roblox" }
+vm = { workspace = "sesocell/conch_vm", version = "^", target = "roblox" }
+types = { workspace = "sesocell/conch_types", version = "^", target = "roblox" }
+intel = { workspace = "sesocell/conch_analysis", version = "^", target = "roblox" }

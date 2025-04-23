@@ -1,4 +1,4 @@
-name = "alicesaidhi/conch_types"
+name = "sesocell/conch_types"
 version = "0.2.1"
 includes = ["src/**", "pesde.toml"]
 

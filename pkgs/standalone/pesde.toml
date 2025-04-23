@@ -1,4 +1,4 @@
-name = "alicesaidhi/conch_standalone"
+name = "sesocell/conch_standalone"
 version = "0.2.0"
 includes = ["src/**", "pesde.toml"]
 private = true
@@ -12,5 +12,5 @@ build_files = ["src"]
 default = "https://github.com/daimond113/pesde-index"
 
 [dependencies]
-conch = { workspace = "alicesaidhi/conch", version = "^" }
-ui = { workspace = "alicesaidhi/conch_ui", version = "^" }
+conch = { workspace = "sesocell/conch", version = "^" }
+ui = { workspace = "sesocell/conch_ui", version = "^" }

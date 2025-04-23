@@ -1,4 +1,4 @@
-name = "alicesaidhi/conch_ast"
+name = "sesocell/conch_ast"
 version = "0.2.1"
 includes = ["src/**", "pesde.toml"]
 
@@ -11,4 +11,4 @@ build_files = ["src"]
 default = "https://github.com/daimond113/pesde-index"
 
 [dependencies]
-types = { workspace = "alicesaidhi/conch_types", version = "^" }
+types = { workspace = "sesocell/conch_types", version = "^" }
