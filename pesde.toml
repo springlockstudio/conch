@@ -1,8 +1,8 @@
 name = "sesocell/conch"
 version = "0.1.0"
 description = "Modern command library for Roblox"
-authors = ["alicesaidhi","sesocell"]
-repository = "https://github.com/alicesaidhi/conch"
+authors = ["alicesaidhi"]
+repository = "https://github.com/springlockstudio/conch"
 license = "MIT"
 private = true
 
