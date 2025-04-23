@@ -1,5 +1,5 @@
-name = "alicesaidhi/conch_ui"
-version = "0.2.4"
+name = "sesocell/conch_ui"
+version = "0.2.5"
 includes = ["src/**", "pesde.toml"]
 
 [target]
@@ -15,5 +15,5 @@ default = "https://github.com/UpliftGames/wally-index"
 
 [dependencies]
 vide = { wally = "wally#centau/vide", version = "^0.3.1" }
-ast = { workspace = "alicesaidhi/conch_ast", version = "^", target = "roblox" }
-conch = { workspace = "alicesaidhi/conch", version = "^" }
+ast = { wally = "wally#alicesaidhi/conch-ast", version = "^0.2.1" }
+conch = { wally = "wally#alicesaidhi/conch", version = "^0.2.4" }
