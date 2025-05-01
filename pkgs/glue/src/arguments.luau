@@ -335,7 +335,6 @@ local playerT = {
 }
 
 local playersT = {
-	kind = "any",
 	convert = function(players) return convert_arg_to_players(players) end,
 
 	analysis = {

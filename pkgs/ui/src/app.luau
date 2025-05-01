@@ -28,6 +28,9 @@ local STARTUP_TEXT = [[
 Conch 0.2.x
 Copyright (c) alicesays_hallo - This project is licensed under MIT, you can view the included license with `license`]]
 
+local history_n = 0
+local history = {}
+
 return function()
 	local function output(values)
 		local s = string.split(values.text, "\n")
@@ -148,11 +151,27 @@ return function()
 
 	cleanup(UserInputService.InputBegan:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.Down then
-			selected_suggestion(
-				math.min(selected_suggestion() + 1, #analysis().suggestions)
-			)
+			if #analysis().suggestions == 0 then
+				if history_n == 0 then history[history_n] = raw_text() end
+
+				history_n = math.clamp(history_n - 1, 0, #history)
+				raw_text(history[history_n] or "")
+				cursor_position(#raw_text() + 1)
+			else
+				selected_suggestion(
+					math.min(selected_suggestion() + 1, #analysis().suggestions)
+				)
+			end
 		elseif input.KeyCode == Enum.KeyCode.Up then
-			selected_suggestion(math.max(1, selected_suggestion() - 1))
+			if #analysis().suggestions == 0 then
+				if history_n == 0 then history[history_n] = raw_text() end
+
+				history_n = math.clamp(history_n + 1, 0, #history)
+				raw_text(history[history_n] or "")
+				cursor_position(#raw_text() + 1)
+			else
+				selected_suggestion(math.max(1, selected_suggestion() - 1))
+			end
 		end
 	end))
 
@@ -281,6 +300,8 @@ return function()
 						end,
 
 						enter = function(value)
+							history_n = 0
+							table.insert(history, 1, value)
 							raw_text ""
 							state.focused(true)
 
