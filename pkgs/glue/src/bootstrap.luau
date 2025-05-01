@@ -1,3 +1,4 @@
+--!nonstrict
 --[[
 Bootstraps some basic functions onto the command line.
 ]]
@@ -151,8 +152,6 @@ return function()
 		console.register_quick("error", error)
 		console.register_quick("warn", warn)
 		console.register_quick("info", info)
-		console.register_quick("vector", vector.create)
-		console.register_quick("set", set)
 		console.register_command("set", {
 			permissions = {},
 			description = "Attempts to set the given key and value onto the given object",

@@ -11,8 +11,11 @@ Here's the current list of available types:
 | boolean   | `boolean` | booleans  | `{ boolean }` | `number`                          |
 | table     | `{}`      |           |               |                                   |
 | vector    | `vector`  | vectors   | `{ vector }`  | `{ number }`,                     |
-| player    | `Player`  | players   | `{ Player }`  | `string`, `@a` (all players), `@s` (yourself) |
+| player    | `Player`  | players   | `{ Player }`  | `string`, `@a` (all players), `@s` (yourself), player |
 | userinput | `Enum.UserInputType` |			|				| `string` |
+| userid | `number` | userids | `{ number }` | `Player`, `string`, `@a`, `@s`, `number` |
+| duration | `number` |  | | `string`, `number` |
+| color3 | `Color3` |  | | `number`, `vector` |
 
 ## Variadic Types
 

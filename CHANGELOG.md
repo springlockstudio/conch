@@ -4,9 +4,21 @@ All notable changes to this project will be documented in this file.
 
 --------------------------------------------------------------------------------
 
-## 0.2.5 conch - 2025-04-08
+## 0.2.2 conch-analysis - 2025-05-XX
+
+- Suggestions are now visible before typing the argument
+- Enable suggestions for strings and numbers
+
+## 0.2.5 conch - 2025-05-XX
 
 - Fix error iterating over undefined roles
+- UserId type
+- Duration type
+- Color3 type
+
+## 0.2.5 conch-ui - 2025-05-XX
+
+- Add up/down arrow controls to cycle through history when no suggestions are available
 
 --------------------------------------------------------------------------------
 

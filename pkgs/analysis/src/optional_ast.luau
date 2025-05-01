@@ -399,17 +399,7 @@ local function parse(input: buffer, can_yield: boolean?)
 			end
 		end
 
-		while is_digit(c) or c == char "." or c == char "_" do
-			c = bump_peek()
-		end
-
-		if c == char "e" or c == char "E" then
-			c = bump_peek()
-
-			if c == char "+" or c == char "-" then c = bump_peek() end
-		end
-
-		while is_digit(c) or is_alpha(c :: any) or c == char "_" do
+		while not is_whitespace(c) and c ~= 0 do
 			c = bump_peek()
 		end
 
@@ -423,11 +413,7 @@ local function parse(input: buffer, can_yield: boolean?)
 
 		text = string.gsub(text, "_", "")
 
-		if tonumber(text, base) then
-			return "number"
-		else
-			return "error"
-		end
+		return "number" -- we do not care!!!!!
 	end
 
 	local function read_kind(): TokenKindRest | TokenKindText
@@ -1385,36 +1371,30 @@ export type Result = {
 	why: string,
 }
 
-local function generate(input: string): Result
-	local value = input
-	local thread = coroutine.create(parse)
+local function generate(src: string): Result
 	local get_result
-
-	local function overwrite(src: string)
-		value = src
-		local b = buffer.fromstring(src)
-		return get_result(coroutine.resume(thread, b, yield))
-	end
 
 	function get_result(ok: boolean, result: any): Result
 		if ok == false then
 			return {
 				status = "error",
-				src = value,
+				src = src,
 				why = result,
 			} :: any
-		elseif coroutine.status(thread) == "dead" then
+		else
 			return {
 				status = "finished",
-				src = value,
+				src = src,
 				value = result,
 			} :: any
-		else
-			error "?"
 		end
 	end
 
-	return overwrite(input)
+	local b = buffer.fromstring(src)
+	local ok, err = pcall(parse, b)
+	return get_result(ok, err)
 end
+
+generate "ban 3d"
 
 return generate

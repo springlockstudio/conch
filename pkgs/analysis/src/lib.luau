@@ -156,9 +156,10 @@ local function generate_analysis_info(
 			if not command_info then return no_suggestions "" end
 
 			local index = 1
-			local span = vector.create(stat.prefix.span.y, 0)
+			local span =
+				vector.create(stat.prefix.span.y + 1, stat.prefix.span.y + 1)
 
-			local arg_analyzed: AnalysisInformation = no_suggestions ""
+			local arg_analyzed: AnalysisInformation = no_suggestions "" :: any
 			for i, argument in stat.arguments do
 				local relative_position = position_relative(argument.span)
 				if relative_position == "within" then
@@ -177,6 +178,7 @@ local function generate_analysis_info(
 					break
 				end
 			end
+
 			local arg_info: (types.AnalysisCommandArgument | types.AnalysisCommandVariadic)? =
 				command_info.arguments[index]
 
@@ -184,7 +186,9 @@ local function generate_analysis_info(
 				arg_info = command_info.arguments[#command_info.arguments]
 
 				if arg_info and arg_info.kind ~= "variadic" then
-					LOG("warn", `no argument #{index}`)
+					if arg_analyzed.text ~= arg_analyzed.text:match "%s*" then
+						LOG("warn", `no argument #{index}`)
+					end
 					return arg_analyzed
 				end
 			end
@@ -213,6 +217,7 @@ local function generate_analysis_info(
 				)
 			end
 
+			arg_analyzed = arg_analyzed
 			arg_analyzed.analyzing = arg_analyzed.analyzing or arg_info
 			return arg_analyzed
 		end
@@ -508,6 +513,10 @@ local function generate_analysis_info(
 			end
 		elseif expr.kind == "identifier" then
 			return no_suggestions(expr.token.text)
+		elseif expr.kind == "string" then
+			return no_suggestions(string.sub(expr.token.text, 2, -2))
+		elseif expr.kind == "number" then
+			return no_suggestions(expr.token.text)
 		elseif expr.kind == "var" then
 			return process_variable(expr.var, true)
 		end
@@ -566,10 +575,12 @@ local function generate_analysis_info(
 
 	function process_block(block: ast.Block)
 		local statement
-		for _, stat in block.body do
+		for i, stat in block.body do
 			statement = stat
 			local pos = position_relative(stat.span)
-			if pos == "before" or pos == "after" then continue end
+			if pos == "before" or (pos == "after" and i < #block.body) then
+				continue
+			end
 
 			if statement == nil then return no_suggestions "" end
 
